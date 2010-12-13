@@ -91,6 +91,13 @@ bootstrap_ia32e_x64:
     pushq $0x0
     movq %rsp, %rbp
 
+    call x86_64_idt_init
+    # TODO: 64 bit TSS, 64bit ISTs and then activate this.
+    #lidt (x86_64_idt_ptr)
+
+    # TESTTEST
+    #mov 0x0, %rax
+
     call __init_bss
     call __kcon_reset
     call __init_cxx
