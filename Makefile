@@ -36,7 +36,7 @@ GRUB2_PXE		 = $(BUILDDIR)/boot/grub/i386-pc/core.0
 GRUB2_ISO		 = $(BUILDDIR)/$(notdir $(KERNEL))-grub2.iso
 
 # TODO: make this more dynamic by using gcc dependency generation
-HDR_DEPEND		:= $(wildcard $(SOURCEDIR)/include/*) $(wildcard $(SOURCEDIR)/include/*/*)
+HDR_DEPEND		:= $(wildcard $(SOURCEDIR)/include/*.h) $(wildcard $(SOURCEDIR)/include/*/*.h) $(wildcard $(SOURCEDIR)/include/*/*/*.h)
 
 #.----------------------------------.
 #| The all target, keep it first!   |

@@ -17,7 +17,7 @@
 #define PF_W        0x2
 #define PF_R        0x4
 
-#ifndef ELF64
+#if ELF_BITS == 64
 typedef struct {
     Elf_Word    p_type;
     Elf_Off     p_offset;
@@ -28,7 +28,7 @@ typedef struct {
     Elf_Word    p_flags;
     Elf_Word    p_align;
 } PACKED Elf_Phdr;
-#else
+#elif ELF_BITS == 32
 typedef struct
 {
     Elf_Word    p_type;

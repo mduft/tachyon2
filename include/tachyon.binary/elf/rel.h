@@ -6,10 +6,10 @@
 #include "types.h"
 
 /* helper macros to encode/decode the info (contains symbol index and type) */
-#ifdef ELF64
+#if ELF_BITS == 64
 # define RI_DECODE(i, s, t)  s = ((i)>>32); t = ((i)&0xFFFFFFFF);
 # define RI_ENCODE(i, s, t)  i = (((s)<<32) + ((t)&0xFFFFFFFF));
-#else
+#elif ELF_BITS == 32
 # define RI_DECODE(i, s, t)  s = ((i)>>8); t = ((i)&0xFF);
 # define RI_ENCODE(i, s, t)  i = (((s)<<8) + ((t)&0xFF));
 #endif

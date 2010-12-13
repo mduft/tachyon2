@@ -50,10 +50,6 @@ static struct syminfo getSymbolInfo(uintptr_t ip) {
     info.name = defName;
     info.addr = ip;
 
-    #define getStr(st, idx) \
-        reinterpret_cast<char const*>( \
-            reinterpret_cast<uintptr_t>(&CORE_LMA_START) + st->sh_offset + idx)
-
     if(strtab == 0 || symtab == 0) {
         Elf_Ehdr* ptr = reinterpret_cast<Elf_Ehdr*>(&CORE_LMA_START);
         Elf_Shdr* shstrtab = 0;
@@ -123,26 +119,31 @@ static struct syminfo getSymbolInfo(uintptr_t ip) {
         ++sym;
     }
 
+
     if(nearest != 0) {
-        info.name = getStr(strtab, nearest->st_name);
+        info.name = reinterpret_cast<char const*>(
+            reinterpret_cast<uintptr_t>(&CORE_LMA_START) + strtab->sh_offset + nearest->st_name);
+
         info.addr = nearest->st_value;
     }
 
     return info;
 }
 
+#ifdef __X86_64__
+# define BP "rbp"
+#endif
+
+#ifdef __X86__
+# define BP "ebp"
+#endif
+
 extern "C" void __dump_stack() {
     register intptr_t* bp;
     register intptr_t ip;
 
-    /* TODO: unified functions implemented by each architecture port
-     * to get registers...? */
     asm(
-    #ifdef __X86_64__
-        "mov %%rbp, %0;"
-    #else
-        "mov %%ebp, %0;"
-    #endif
+        "mov %%"BP", %0;"
         "call 1f;"
         "1: pop %1;"
         : "=r" (bp), "=r" (ip));
