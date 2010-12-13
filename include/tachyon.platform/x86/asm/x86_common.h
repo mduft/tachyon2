@@ -48,10 +48,35 @@
 
 /* 
  * .--------------------------------.
- * | Assembler only, section attrs  |
+ * | Assembler section attributes   |
  * '--------------------------------' 
  */
 
 #define SECTION_BOOT_DATA .section .boot_data, "aw", @progbits
 #define SECTION_BOOT_TEXT .section .boot_text, "ax"
 
+/* 
+ * .--------------------------------.
+ * | CPU Exceptions                 |
+ * '--------------------------------' 
+ */
+
+#define X86_DIV_ERR     0
+#define X86_DEBUG_EX    1
+#define X86_NMI         2
+#define X86_BREAKPOINT  3
+#define X86_OVERFLOW    4
+#define X86_BOUND_RANGE 5
+#define X86_INVALID_OP  6
+#define X86_DEVICE_NA   7
+#define X86_DFAULT      8
+#define X86_CO_SEG_OF   9
+#define X86_INVALID_TSS 10
+#define X86_SEG_NP      11
+#define X86_STACK_FAULT 12
+#define X86_GPF         13
+#define X86_PAGE_FAULT  14
+#define X86_FPE         16
+#define X86_ALIGN_CHECK 17
+#define X86_MCE         18
+#define X86_SIMD_FPE    19
