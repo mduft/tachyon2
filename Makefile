@@ -145,7 +145,7 @@ qemu-dbg:
 gdb:
 	@gdb=$$(type -p cgdb); test -x "$${gdb}" || gdb=$(GDB); test -x "$${gdb}" || gdb=gdb; \
 	 echo "using $${gdb}..."; \
-	$${gdb} -x $(SOURCEDIR)/config/gdb-qemu.gdbinit $(KERNEL)
+	$${gdb} -x $(SOURCEDIR)/config/misc/gdb-qemu.gdbinit $(KERNEL)
 	
 #
 # grub2 network boot
@@ -186,7 +186,7 @@ qemu-cd-dbg:
 
 BOCHS_RC	:= $(BUILDDIR)/bochsrc.txt
 
-$(BOCHS_RC): $(SOURCEDIR)/config/bochsrc.in $(GRUB2_ISO)
+$(BOCHS_RC): $(SOURCEDIR)/config/misc/bochsrc.in $(GRUB2_ISO)
 	@-$(MAKE_BDIR)
 	@sed -e "s,@GRUB2_ISO@,$(GRUB2_ISO),g" < "$<" > "$@"
 
@@ -198,7 +198,7 @@ bochs-cd: $(BOCHS_RC) $(GRUB2_ISO)
 # GRUB2 related stuff
 #
 
-$(GRUB2_CFG): $(SOURCEDIR)/config/grub2.cfg
+$(GRUB2_CFG): $(SOURCEDIR)/config/misc/grub2.cfg
 	@-$(MAKE_BDIR)
 	@sed -e "s,@KERNEL@,$(notdir $(KERNEL)),g" < "$<" > "$@"
 
