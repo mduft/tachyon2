@@ -111,7 +111,7 @@ static struct syminfo getSymbolInfo(uintptr_t ip) {
         Elf_Word type, binding;
         STI_DECODE(sym->st_info, binding, type);
 
-        if(sym->st_value < ip && (nearest == 0 
+        if(type != STT_SECTION && sym->st_value < ip && (nearest == 0 
                 || (nearest->st_value < sym->st_value))) {
             nearest = sym;
         }

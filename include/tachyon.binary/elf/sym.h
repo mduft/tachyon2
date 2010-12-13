@@ -22,7 +22,7 @@
 #define STI_DECODE(i, b, t) b = ((i)>>4); t = ((i)&0xF);
 #define STI_ENCODE(i, b, t) i = (((b)<<4)+((t)&0xF));
 
-#if ELF_BITS == 64
+#if ELF_BITS == 32
 typedef struct {
     Elf_Word        st_name;
     Elf_Addr        st_value;
@@ -31,7 +31,7 @@ typedef struct {
     unsigned char   st_other;
     Elf_Half        str_shndx;
 } PACKED Elf_Sym;
-#elif ELF_BITS == 32
+#elif ELF_BITS == 64
 typedef struct
 {
     Elf_Word        st_name;
