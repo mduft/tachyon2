@@ -4,7 +4,12 @@
 #include <tachyon.platform/x86/InterruptManager.h>
 #include <tachyon.logging/Log.h>
 
+InterruptManager InterruptManager::inst;
+
 extern "C" void interrupt_l0(interrupt_t * state) {
-    KFATAL("unhandled interrupt 0x%x at %p (0x%x)\n", state->interrupt, state->ip, state->code);
+    InterruptManager::instance().dispatch(state);
 }
 
+void InterruptManager::dispatch(interrupt_t* state) {
+    KFATAL("unhandled interrupt 0x%x at %p (0x%x)\n", state->interrupt, state->ip, state->code);
+}

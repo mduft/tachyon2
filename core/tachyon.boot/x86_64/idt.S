@@ -8,7 +8,6 @@ SECTION_BOOT_DATA
 .global x86_64_idt_ptr
 .global x86_64_idt_init
 .global x86_64_idt_set
-.global x86_64_idt_stack_top
 
 # .----------------------------------------.
 # | 64 bit IDT                             |
@@ -16,16 +15,11 @@ SECTION_BOOT_DATA
 
 .align 0x10
 x86_64_idt:
-    .fill 0xFF, 0x8, 0x0
-    .fill 0xFF, 0x8, 0x0
+    .fill 120, 0x8, 0x0 # 60 entries a 0x10 bytes, thus 120 times 0x8 bytes room
 
 x86_64_idt_ptr:
     .word . - x86_64_idt - 1
     .quad x86_64_idt
-
-x86_64_idt_stack:
-    .space 0x2000
-    x86_64_idt_stack_top:
 
 # .----------------------------------------.
 # | 64 bit ISRs that delegate              |
@@ -34,7 +28,6 @@ x86_64_idt_stack:
 .section .text
 
 x86_64_isr_trampoline:
-    # all ISRs land here, with a possible dummy error code.
     mov %rsp, %rdi
     callq interrupt_l0
     iret
@@ -86,6 +79,35 @@ x86_64_isr     29,              0,  1   #RESERVED
 x86_64_isr     30,              0,  1   #RESERVED
 x86_64_isr     31,              0,  1   #RESERVED
 
+x86_64_isr     32,  0
+x86_64_isr     33,  0
+x86_64_isr     34,  0
+x86_64_isr     35,  0
+x86_64_isr     36,  0
+x86_64_isr     37,  0
+x86_64_isr     38,  0
+x86_64_isr     39,  0
+x86_64_isr     40,  0
+x86_64_isr     41,  0
+x86_64_isr     42,  0
+x86_64_isr     43,  0
+x86_64_isr     44,  0
+x86_64_isr     45,  0
+x86_64_isr     46,  0
+x86_64_isr     47,  0
+x86_64_isr     48,  0
+x86_64_isr     49,  0
+x86_64_isr     50,  0
+x86_64_isr     51,  0
+x86_64_isr     52,  0
+x86_64_isr     53,  0
+x86_64_isr     54,  0
+x86_64_isr     55,  0
+x86_64_isr     56,  0
+x86_64_isr     57,  0
+x86_64_isr     58,  0
+x86_64_isr     59,  0
+
 # .----------------------------------------.
 # | Functions to init and fill the idt     |
 # '----------------------------------------'
@@ -136,6 +158,37 @@ x86_64_idt_init:
     set_int_gate 30
     set_int_gate 31
 
+    # IRQs and other implementation defined stuff.
+    set_int_gate 31
+    set_int_gate 32
+    set_int_gate 33
+    set_int_gate 34
+    set_int_gate 35
+    set_int_gate 36
+    set_int_gate 37
+    set_int_gate 38
+    set_int_gate 39
+    set_int_gate 40
+    set_int_gate 41
+    set_int_gate 42
+    set_int_gate 43
+    set_int_gate 44
+    set_int_gate 45
+    set_int_gate 46
+    set_int_gate 47
+    set_int_gate 48
+    set_int_gate 49
+    set_int_gate 50
+    set_int_gate 51
+    set_int_gate 52
+    set_int_gate 53
+    set_int_gate 54
+    set_int_gate 55
+    set_int_gate 56
+    set_int_gate 57
+    set_int_gate 58
+    set_int_gate 59
+
     pop %rdi
     pop %rsi
     pop %rcx
@@ -148,8 +201,8 @@ x86_64_idt_set:
     push %rax
     push %rbx
 
-    # RSI: the target RIP
     # RDI: the gate number
+    # RSI: the target RIP
 
     # .----------------------------------------.
     # | Calculate the entries address in IDT   |

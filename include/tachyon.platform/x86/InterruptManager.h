@@ -6,6 +6,9 @@
 #include <tachyon.platform/architecture.h>
 
 class InterruptManager {
+    static InterruptManager inst;
 public:
-    
+    static InterruptManager& instance() { return inst; }
+
+    void dispatch(interrupt_t* state);
 };
