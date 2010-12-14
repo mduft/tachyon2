@@ -8,6 +8,7 @@
 #include <tachyon.logging/Log.h>
 #include <tachyon.boot/MultiBoot.h>
 #include <tachyon.memory/MemoryHelper.h>
+#include <tachyon.memory/PhysicalAllocator.h>
 
 extern "C" void boot(void* mbd, uint32_t mbm) {
     TimestampCounter ctr;

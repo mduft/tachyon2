@@ -43,12 +43,18 @@ struct syminfo {
 static struct syminfo getSymbolInfo(uintptr_t ip) {
     static char const* defName = "<unknown>";
 
-    static Elf_Shdr* strtab = 0;
-    static Elf_Shdr* symtab = 0;
-
     struct syminfo info;
     info.name = defName;
     info.addr = ip;
+
+    /* --- This code does not work:
+     *  The Problem with it is, that the .bss section in memory may overlay the
+     *  sections not loaded into memory in their file-relative addresses. as soon
+     *  as the .bss section is cleared, the normally-not-loaded sections are
+     *  cleared... and thus the strtab and symtab disappear. The only valid solution
+     *  is to build our own symbol table...
+    static Elf_Shdr* strtab = 0;
+    static Elf_Shdr* symtab = 0;
 
     if(strtab == 0 || symtab == 0) {
         Elf_Ehdr* ptr = reinterpret_cast<Elf_Ehdr*>(&CORE_LMA_START);
@@ -126,6 +132,7 @@ static struct syminfo getSymbolInfo(uintptr_t ip) {
 
         info.addr = nearest->st_value;
     }
+    */
 
     return info;
 }

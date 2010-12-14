@@ -67,6 +67,10 @@
 #define PAGE_WRITABLE           (1 << 1)
 #define PAGE_LARGE              (1 << 7)
 
+#define PAGE_SIZE_4K            0x001000
+#define PAGE_SIZE_2M            0x200000
+#define PAGE_SIZE_4M            0x400000
+
 /* 
  * .--------------------------------.
  * | Assembler section attributes   |
