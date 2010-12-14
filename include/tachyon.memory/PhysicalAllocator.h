@@ -8,27 +8,23 @@
 
 class PhysicalAllocator {
     BitMap spBitmap;
-    BitMap lpBitmap;
     uint8_t spStorage[(64 * 1024)]; // 64KB is enough for roughly 2TB physical mem.
-    uint8_t lpStorage[( 1 * 1024)]; //  1KB is enough for 2TB with 2MB pages.
     static PhysicalAllocator inst;
 
     PhysicalAllocator()
-        :   spBitmap(&spStorage, sizeof(spStorage))
-        ,   lpBitmap(&lpStorage, sizeof(lpStorage)) {
+        :   spBitmap(&spStorage, sizeof(spStorage)) {
         spBitmap.setAll(true);
-        lpBitmap.setAll(true);
     }
 
     void setRegion(uintptr_t start, uintptr_t length, bool value);
+    bool tryAllocate(uintptr_t phys, size_t length);
 public:
     static PhysicalAllocator& instance() { return inst; }
 
     void available(uintptr_t start, uintptr_t length);
     void reserve(uintptr_t start, uintptr_t length);
-    uintptr_t allocate();
-    uintptr_t allocate(bool large);
-    uintptr_t allocate(uintptr_t phys);
-    uintptr_t allocate(uintptr_t phys, bool large);
-    void free(uintptr_t phys);
+
+    uintptr_t allocateAligned(size_t length, size_t align);
+    uintptr_t allocateFixed(uintptr_t phys, size_t length);
+    void free(uintptr_t phys, size_t length);
 };

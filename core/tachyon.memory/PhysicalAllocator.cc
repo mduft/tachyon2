@@ -6,23 +6,15 @@
 
 PhysicalAllocator PhysicalAllocator::inst;
 
-#ifdef __X86_64__
-# define LARGE_PAGE_SHIFT 21
-# define SMALL_PAGE_SHIFT 12
-#else
-# define LARGE_PAGE_SHIFT 22
-# define SMALL_PAGE_SHIFT 12
-#endif
-
 // scaling for 4K pages
-#define SCALE_TO_INDEX_S(x) ((x) >> SMALL_PAGE_SHIFT)
-#define SCALE_TO_PHYS_S(x)  ((x) << SMALL_PAGE_SHIFT)
+#define PAGE_SHIFT 12
 
-// scaling for large pages (2MB for 64bits, 4MB for 32bits)
-#define SCALE_TO_INDEX_L(x) ((x) >> LARGE_PAGE_SHIFT)
-#define SCALE_TO_PHYS_L(x)  ((x) << LARGE_PAGE_SHIFT)
+#define SCALE_TO_INDEX(x) ((x) >> PAGE_SHIFT)
+#define SCALE_TO_PHYS(x)  ((x) << PAGE_SHIFT)
+#define PAGE_COUNT(x)     (((x) >> PAGE_SHIFT) + (((x) & (PAGE_SIZE_DEFAULT -1)) ? 1 : 0))
 
-#define SMALL2LARGE_RELATION ((1 << LARGE_PAGE_SHIFT) / (1 << SMALL_PAGE_SHIFT))
+#define ALIGN_DOWN(x, a)  ((x) & ~(a-1))
+#define ALIGN_UP(x, a)    ALIGN_DOWN((x) + a, a)
 
 void PhysicalAllocator::setRegion(uintptr_t start, uintptr_t length, bool value) {
     if(start & (PAGE_SIZE_DEFAULT-1) || (start + length) & (PAGE_SIZE_DEFAULT-1)) {
@@ -30,13 +22,7 @@ void PhysicalAllocator::setRegion(uintptr_t start, uintptr_t length, bool value)
     }
 
     while(length -= PAGE_SIZE_DEFAULT) {
-        spBitmap.set(SCALE_TO_INDEX_S(start), value);
-
-        if(length + PAGE_SIZE_DEFAULT >= (1 << LARGE_PAGE_SHIFT)
-                && (start & ((1 << LARGE_PAGE_SHIFT) -1))) {
-            lpBitmap.set(SCALE_TO_INDEX_L(start), value);
-        }
-
+        spBitmap.set(SCALE_TO_INDEX(start), value);
         start += PAGE_SIZE_DEFAULT;
     }
 }
@@ -49,93 +35,69 @@ void PhysicalAllocator::reserve(uintptr_t start, uintptr_t length) {
     setRegion(start, length, true);
 }
 
-uintptr_t PhysicalAllocator::allocate() {
-    ssize_t index = spBitmap.getIndexOf(false);
+bool PhysicalAllocator::tryAllocate(uintptr_t phys, size_t length) {
+    register size_t off;
 
-    if(index == -1)
-        return 0;
+    // TODO: lock this!
+    
+    if(SCALE_TO_INDEX(phys) + PAGE_COUNT(length) > spBitmap.size())
+        return false;
 
-    KTRACE("got %p\n", SCALE_TO_PHYS_S(index));
+    for(off = 0; off < PAGE_COUNT(length); ++off) {
+        if(spBitmap.get(SCALE_TO_INDEX(phys) + off))
+            return false;
+    }
 
-    spBitmap.set(index, true);
-    return SCALE_TO_PHYS_S(index);
+    for(off = 0; off < PAGE_COUNT(length); ++off) {
+        KTRACE("handing out page @ %p\n", SCALE_TO_PHYS(SCALE_TO_INDEX(phys) + off));
+        spBitmap.set(SCALE_TO_INDEX(phys) + off, true);
+    }
+
+    KINFO("ok, addr=%p, length=%d\n", phys, length);
+
+    return true;
 }
 
-uintptr_t PhysicalAllocator::allocate(bool large) {
-    if(!large)
-        return allocate();
+uintptr_t PhysicalAllocator::allocateAligned(size_t length, size_t align) {
+    KASSERTM(align >= PAGE_SIZE_DEFAULT, 
+        "alignment must be at least the physical page size");
 
-    /* start at first non zero large page */
-    ssize_t index = SCALE_TO_INDEX_S((1 << LARGE_PAGE_SHIFT)-1);
-    while(true) {
-        index = spBitmap.getIndexOf(false, index + 1);
-        uintptr_t i;
+    KASSERTM(align % PAGE_SIZE_DEFAULT == 0,
+        "alignment must be a multiple of physical page size");
 
-        if(index == -1)
-            return 0;
+    /* lowest non-zero, aligned, free index */
+    ssize_t index = SCALE_TO_INDEX(ALIGN_UP(SCALE_TO_PHYS(
+        spBitmap.getIndexOf(false, SCALE_TO_INDEX(align))), align));
 
-        if(SCALE_TO_PHYS_S(index) & ((1 << LARGE_PAGE_SHIFT)-1)) {
-            /* round up to next large page */
-            index = SCALE_TO_INDEX_S(((SCALE_TO_PHYS_S(index) + (1 << LARGE_PAGE_SHIFT))) & ~((1 << LARGE_PAGE_SHIFT) -1)) -1;
-            continue;
-        }
+    while(index != -1 && index <= static_cast<ssize_t>(spBitmap.size())) {
+        if(tryAllocate(SCALE_TO_PHYS(index), length))
+            return SCALE_TO_PHYS(index);
 
-        for(i = 1; i < SMALL2LARGE_RELATION; ++i) {
-            if(spBitmap.get(index + i))
-                break;
-        }
+        /* next try - get next aligned index from first next free one onwards */
+        index = SCALE_TO_INDEX(ALIGN_UP(
+            SCALE_TO_PHYS(spBitmap.getIndexOf(false, index + 1)), align));
+    }
 
-        if(i < SMALL2LARGE_RELATION) {
-            index += i;
+    KWARN("allocation failed, addr=<any>, length=%d, align=0x%x\n", length, align);
+    return 0;
+}
 
-            /* round up to next large page */
-            index = SCALE_TO_INDEX_S(((SCALE_TO_PHYS_S(index) + (1 << LARGE_PAGE_SHIFT))) & ~((1 << LARGE_PAGE_SHIFT) -1)) -1;
-            continue;
-        }
+uintptr_t PhysicalAllocator::allocateFixed(uintptr_t phys, size_t length) {
+    KASSERTM(phys % PAGE_SIZE_DEFAULT == 0,
+        "alignment of physical address must be a multiple of physical page size!");
 
-        for(i = 0; i < SMALL2LARGE_RELATION; ++i) {
-            spBitmap.set(index + i, true);
-        }
-
-        register uintptr_t phys = SCALE_TO_PHYS_S(index);
-
-        lpBitmap.set(SCALE_TO_INDEX_L(phys), true);
-
-        KTRACE("got %p\n", SCALE_TO_PHYS_S(index));
-
+    if(tryAllocate(phys, length))
         return phys;
+
+    KWARN("allocation failed, addr=%p, length=%d, align=<fixed>\n", phys, length);
+    return 0;
+}
+
+void PhysicalAllocator::free(uintptr_t phys, size_t length) {
+    register size_t off;
+
+    for(off = 0; off < PAGE_COUNT(length); ++off) {
+        spBitmap.set(SCALE_TO_INDEX(phys) + off, false);
     }
 }
 
-uintptr_t PhysicalAllocator::allocate(uintptr_t phys) {
-    if(spBitmap.get(SCALE_TO_INDEX_S(phys)))
-        return 0;
-
-    spBitmap.set(SCALE_TO_INDEX_S(phys), true);
-    KTRACE("got (fixed) %p\n", phys);
-    return phys;
-}
-
-uintptr_t PhysicalAllocator::allocate(uintptr_t phys, bool large) {
-    if(!large)
-        return allocate(phys);
-
-    if(lpBitmap.get(SCALE_TO_INDEX_L(phys)))
-        return 0;
-
-    uintptr_t idx = SCALE_TO_INDEX_S(phys);
-    uintptr_t i;
-
-    for(i = 0; i < SMALL2LARGE_RELATION; ++i) {
-        if(spBitmap.get(idx + i))
-            return 0;
-    }
-
-    for(i = 0; i < SMALL2LARGE_RELATION; ++i) {
-        spBitmap.set(idx + i, true);
-    }
-
-    lpBitmap.set(SCALE_TO_INDEX_L(phys), true);
-    KTRACE("got (fixed) %p\n", phys);
-    return phys;
-}

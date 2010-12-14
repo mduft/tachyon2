@@ -70,17 +70,8 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
     uint64_t min = ctr.getCurrentTicks() - start;
     KINFO("min-ticks: %d\n", min);
 
-    /* test allocator */
-    uintptr_t phys0 = PhysicalAllocator::instance().allocate();
-    uintptr_t phys1 = PhysicalAllocator::instance().allocate(static_cast<uintptr_t>(0x400000));
-    uintptr_t phys2 = PhysicalAllocator::instance().allocate(true);
-    uintptr_t phys3 = PhysicalAllocator::instance().allocate(0x401000, true);
-    uintptr_t phys4 = PhysicalAllocator::instance().allocate();
-    uintptr_t phys5 = PhysicalAllocator::instance().allocate(true);
-
-    KINFO("phys-alloc: %p, %p\n", phys0, phys1);
-    KINFO("            %p, %p\n", phys2, phys3);
-    KINFO("            %p, %p\n", phys4, phys5);
+    /* temporary to see more screen output! */
+    asm("cli; hlt;");
 
     KFATAL("reached end of kernel after %lu ticks!\n", ctr.getTicksSinceStart());
 }

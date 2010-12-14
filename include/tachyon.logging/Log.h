@@ -20,6 +20,10 @@
 #define KFATAL(...) KLOG(Log::Fatal,     __VA_ARGS__, 0); abort();
 #define KWRITE(...) Log::instance()->write(__VA_ARGS__);
 
+/* TODO: maybe find a better place for this...? */
+#define KASSERT(x)      if(!(x)) { KFATAL("assertion fail: %s\n", #x); }
+#define KASSERTM(x,m)    if(!(x)) { KFATAL("assertion fail: %s (%s)\n", #x, m); }
+
 typedef void(*log_writer_t)(char const* psz);
 
 class Log {
