@@ -35,6 +35,8 @@ x86_64_idt_stack:
 
 x86_64_isr_trampoline:
     # all ISRs land here, with a possible dummy error code.
+    mov %rsp, %rdi
+    callq interrupt_l0
     iret
 
 .macro x86_64_isr num, has_err, res=0
@@ -45,6 +47,7 @@ _x86_64_isr\num:
     .if \res
     call abort
     .else
+    push $\num
     jmp x86_64_isr_trampoline
     .endif
 .endm
@@ -148,6 +151,10 @@ x86_64_idt_set:
     # RSI: the target RIP
     # RDI: the gate number
 
+    # .----------------------------------------.
+    # | Calculate the entries address in IDT   |
+    # '----------------------------------------'
+    
     push %rdx
     mov %rdi, %rax
     mov $0x10, %rdx
@@ -156,6 +163,23 @@ x86_64_idt_set:
 
     add $x86_64_idt, %rax
 
+    # .----------------------------------------.
+    # | Clear the entry if RIP == 0            |
+    # '----------------------------------------'
+    
+    cmp $0x0, %rsi
+    jne 1f
+
+    # RIP is NULL, clear the entry instead of setting it...
+    movq $0x0, (%rax)
+    movq $0x0, 8(%rax)
+    jmp 2f  # immediately exit after setting to zero.
+
+    # .----------------------------------------.
+    # | Set the entry if RIP != 0              |
+    # '----------------------------------------'
+
+    1:
     xor %ebx, %ebx
 
     mov %rsi, %rbx
@@ -165,18 +189,17 @@ x86_64_idt_set:
     mov %ebx, (%rax)
     mov %rsi, %rbx
     and $~0xFFFF, %ebx
-    or $IDTT_LARGE_INT_GATE, %ebx
+    or $(IDTT_LARGE_INT_GATE | IDTE_PRESENT), %ebx
     mov %ebx, 4(%rax)
 
     shr $0x20, %rsi
     mov %rsi, 8(%rax)
 
-#    .word _x86_64_isr##x & 0xFFFF                         # lowest bits of RIP    \
-#    .word 0x18                                              # segment selector      \
-#    .long _x86_64_isr##x &~0xFFFF | IDTT_LARGE_INT_GATE   # 16:31 of RIP + type   \
-#    .long _x86_64_isr##x & 0xFFFFFFFF                     # 32:63 of RIP          \
-#    .long 0x0                                               # reserved (zero)
+    # .----------------------------------------.
+    # | And we're done                         |
+    # '----------------------------------------'
 
+    2:
     pop %rbx
     pop %rax
     pop %rbp

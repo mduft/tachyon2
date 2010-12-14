@@ -69,6 +69,16 @@ typedef struct {
     uintptr_t   r8;
 } xcpustate_t;
 
+typedef struct {
+    uintptr_t   interrupt;
+    uintptr_t   code;
+    uintptr_t   ip;
+    uintptr_t   cs;
+    uintptr_t   flags;
+    uintptr_t   sp;
+    uintptr_t   ss;
+} interrupt_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

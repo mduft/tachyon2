@@ -20,6 +20,8 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
     KINFO("booting tachyon on %s\n", TACHYON_ARCH);
     KTRACE("multiboot information at %p (magic: 0x%x)\n", mbd, mbm);
 
+    if(*(char*)0x0 == 'a') { return; }
+
     if(mbm != MB_MAGIC) {
         KFATAL("multiboot magic number check failed.\n");
     }

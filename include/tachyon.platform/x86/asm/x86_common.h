@@ -42,18 +42,20 @@
  * '--------------------------------' 
  */
 
-#define IDTT_SMALL_TSS_AVAIL    (0x1 << 7)
-#define IDTT_LDT                (0x2 << 7)
-#define IDTT_SMALL_TSS_BUSY     (0x3 << 7)
-#define IDTT_SMALL_CALL_GATE    (0x4 << 7)
-#define IDTT_TASK_GATE          (0x5 << 7)
-#define IDTT_SMALL_INT_GATE     (0x6 << 7)
-#define IDTT_SMALL_TRAP_GATE    (0x7 << 7)
-#define IDTT_LARGE_TSS_AVAIL    (0x9 << 7)
-#define IDTT_LARGE_TSS_BUSY     (0xb << 7)
-#define IDTT_LARGE_CALL_GATE    (0xc << 7)
-#define IDTT_LARGE_INT_GATE     (0xe << 7)
-#define IDTT_LARGE_TRAP_GATE    (0xf << 7)
+#define IDTT_SMALL_TSS_AVAIL    (0x1 << 8)
+#define IDTT_LDT                (0x2 << 8)
+#define IDTT_SMALL_TSS_BUSY     (0x3 << 8)
+#define IDTT_SMALL_CALL_GATE    (0x4 << 8)
+#define IDTT_TASK_GATE          (0x5 << 8)
+#define IDTT_SMALL_INT_GATE     (0x6 << 8)
+#define IDTT_SMALL_TRAP_GATE    (0x7 << 8)
+#define IDTT_LARGE_TSS_AVAIL    (0x9 << 8)
+#define IDTT_LARGE_TSS_BUSY     (0xb << 8)
+#define IDTT_LARGE_CALL_GATE    (0xc << 8)
+#define IDTT_LARGE_INT_GATE     (0xe << 8)
+#define IDTT_LARGE_TRAP_GATE    (0xf << 8)
+
+#define IDTE_PRESENT            (0x1 << 15)
 
 /* 
  * .--------------------------------.
