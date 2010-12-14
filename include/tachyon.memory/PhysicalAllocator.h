@@ -19,10 +19,13 @@ class PhysicalAllocator {
         spBitmap.setAll(true);
         lpBitmap.setAll(true);
     }
+
+    void setRegion(uintptr_t start, uintptr_t length, bool value);
 public:
     static PhysicalAllocator& instance() { return inst; }
 
     void available(uintptr_t start, uintptr_t length);
+    void reserve(uintptr_t start, uintptr_t length);
     uintptr_t allocate();
     uintptr_t allocate(bool large);
     uintptr_t allocate(uintptr_t phys);

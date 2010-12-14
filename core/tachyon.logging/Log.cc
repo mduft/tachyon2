@@ -152,8 +152,17 @@ void Log::format(char* buffer, size_t len, char const* fmt, va_list args) {
                 if(!append)
                     append = "(null)";
 
-                while(*append)
-                    CHECKED_APPEND(*append++);
+                {
+                    size_t len = 0;
+                    while(*append) {
+                        CHECKED_APPEND(*append++);
+                        len++;
+                    }
+
+                    while(len++ < width) {
+                        CHECKED_APPEND(' ');
+                    }
+                }
 
                 break;
 

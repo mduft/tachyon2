@@ -11,7 +11,7 @@
 #define MAX_NUMBER_DIGITS 0x20
 
 #define KLOG(lvl, fmt, ...) \
-    if(Log::instance()->getLevel() <= lvl) { Log::instance()->write("%s:%d: " fmt, __func__,  __LINE__, __VA_ARGS__); }
+    if(Log::instance()->getLevel() <= lvl) { Log::instance()->write("%10s:%4d: " fmt, __FUNCTION__,  __LINE__, __VA_ARGS__); }
 
 #define KTRACE(...) KLOG(Log::Trace,     __VA_ARGS__, 0); 
 #define KINFO(...)  KLOG(Log::Info,      __VA_ARGS__, 0);
