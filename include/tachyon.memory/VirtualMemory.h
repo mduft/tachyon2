@@ -13,10 +13,12 @@ class VirtualMemory {
     static VirtualMemory inst;
 
     VirtualMemory() {}
-public:
-    uintptr_t addMapping(vspace_t space, uintptr_t virt, uintptr_t phys, size_t pages);
-    uintptr_t addMapping(vspace_t space, uintptr_t phys, size_t pages);
-    void removeMapping(vspace_t space, uintptr_t virt, size_t pages);
 
-    vspace_t changeAddressSpace(vspace_t newSpace);
+public:
+    uintptr_t map(vspace_t space, uintptr_t virt, uintptr_t phys, size_t pages, pagesize_t size);
+    uintptr_t map(vspace_t space, uintptr_t phys, size_t pages, pagesize_t size);
+    void unmap(vspace_t space, uintptr_t virt, size_t pages);
+
+    void activateVSpace(vspace_t newSpace);
+    vspace_t getCurrentVSpace();
 };
