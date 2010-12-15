@@ -6,12 +6,12 @@
 #include <tachyon.platform/architecture.h>
 #include <tachyon.collections/BitMap.h>
 
-class PhysicalAllocator {
+class PhysicalMemory {
     BitMap spBitmap;
     uint8_t spStorage[(64 * 1024)]; // 64KB is enough for roughly 2TB physical mem.
-    static PhysicalAllocator inst;
+    static PhysicalMemory inst;
 
-    PhysicalAllocator()
+    PhysicalMemory()
         :   spBitmap(&spStorage, sizeof(spStorage)) {
         spBitmap.setAll(true);
     }
@@ -19,7 +19,7 @@ class PhysicalAllocator {
     void setRegion(uintptr_t start, uintptr_t length, bool value);
     bool tryAllocate(uintptr_t phys, size_t length);
 public:
-    static PhysicalAllocator& instance() { return inst; }
+    static PhysicalMemory& instance() { return inst; }
 
     void available(uintptr_t start, uintptr_t length);
     void reserve(uintptr_t start, uintptr_t length);

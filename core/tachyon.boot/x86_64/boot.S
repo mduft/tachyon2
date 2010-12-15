@@ -24,11 +24,11 @@ SECTION_BOOT_TEXT
 # and the code too.
 
 .align 4
-bootstrap_ia32e_mbhdr:
+bootstrap_x86_64_mbhdr:
     .long MAGIC                     # the magic number
     .long FLAGS                     # the loader flags
     .long CHECKSUM                  # checksum
-    .long bootstrap_ia32e_mbhdr     # address of this header
+    .long bootstrap_x86_64_mbhdr    # address of this header
     .long CORE_LMA_START            # start of the kernel
     .long 0x0                       # load all of the image (no end of data section)
     .long 0x0                       # load all image, and clear bss ourselves
@@ -36,13 +36,13 @@ bootstrap_ia32e_mbhdr:
 
 bootstrap_x86_64:
     # first, let's start witch setting up a stack in lower half.
-    mov $bootstrap_ia32e_stack_top, %esp
+    mov $bootstrap_x86_64_stack_top, %esp
 
     # save the boot-loader-set eax & ebx
-    mov %eax, (bootstrap_ia32e_boot_eax)
-    mov %ebx, (bootstrap_ia32e_boot_ebx)
+    mov %eax, (bootstrap_x86_64_boot_eax)
+    mov %ebx, (bootstrap_x86_64_boot_ebx)
 
-    lgdt (ia32e_gdt_ptr)        # load the new 64-bit gdt.
+    lgdt (x86_64_gdt_ptr)        # load the new 64-bit gdt.
 
     ljmp $0x8,$1f
 1:
@@ -66,24 +66,24 @@ bootstrap_x86_64:
     bts  $8, %eax               # set the LME bit.
     wrmsr                       # and write it back.
 
-    # We're in ia32e compatability mode now. We now have to
+    # We're in x86_64 compatability mode now. We now have to
     # enable paging, and activate a 64 bit gdt.
 
-    mov $ia32e_pg_pml4, %eax    # load the boot paging PML4
+    mov $x86_64_pg_pml4, %eax   # load the boot paging PML4
     mov %eax, %cr3              # set the new PML4
     mov %cr0, %eax              # read CR0
     bts $31, %eax               # set the paging enabled bit.
     mov %eax, %cr0              # and write it back
 
-    ljmp $0x18,$bootstrap_ia32e_x64
+    ljmp $0x18,$bootstrap_x86_64_x64
 
 # .----------------------------------------.
 # | 64 bit init code. enables paging.      |
 # '----------------------------------------'
 
 .code64
-bootstrap_ia32e_x64:
-    movq $bootstrap_ia32e_stack_top, %rsp
+bootstrap_x86_64_x64:
+    movq $bootstrap_x86_64_stack_top, %rsp
     movq $CORE_VMA_X86_64, %rax
     addq %rax, %rsp
 
@@ -100,8 +100,8 @@ bootstrap_ia32e_x64:
     lidt (x86_64_idt_ptr)
 
     # restore the multiboot-loader information to the correct register
-    mov (bootstrap_ia32e_boot_ebx), %rdi
-    mov (bootstrap_ia32e_boot_eax), %rsi
+    mov (bootstrap_x86_64_boot_ebx), %rdi
+    mov (bootstrap_x86_64_boot_eax), %rsi
 
     # TODO: assure that the multiboot information is mapped!
 
@@ -189,14 +189,14 @@ abort:
 
 SECTION_BOOT_DATA
 
-bootstrap_ia32e_stack:
+bootstrap_x86_64_stack:
     .space 0x10000
-    bootstrap_ia32e_stack_top:
+    bootstrap_x86_64_stack_top:
 
-bootstrap_ia32e_boot_eax:
+bootstrap_x86_64_boot_eax:
     .long 0x0
 
-bootstrap_ia32e_boot_ebx:
+bootstrap_x86_64_boot_ebx:
     .long 0x0
 
 # .----------------------------------------.

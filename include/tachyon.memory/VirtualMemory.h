@@ -5,9 +5,8 @@
 
 #include <tachyon.platform/architecture.h>
 
-typedef struct {
-    uintptr_t cr3;
-} vspace_t;
+/* implementation defined */
+struct vspace_t;
 
 class VirtualMemory {
     static VirtualMemory inst;
@@ -15,10 +14,13 @@ class VirtualMemory {
     VirtualMemory() {}
 
 public:
-    uintptr_t map(vspace_t space, uintptr_t virt, uintptr_t phys, size_t pages, pagesize_t size);
-    uintptr_t map(vspace_t space, uintptr_t phys, size_t pages, pagesize_t size);
-    void unmap(vspace_t space, uintptr_t virt, size_t pages);
+    static VirtualMemory& instance() { return inst; }
 
-    void activateVSpace(vspace_t newSpace);
-    vspace_t getCurrentVSpace();
+    uintptr_t map(vspace_t* space, uintptr_t phys, size_t pages, pagesize_t size);
+    void unmap(vspace_t* space, uintptr_t virt, size_t pages);
+
+    void activateVSpace(vspace_t* newSpace);
+
+    vspace_t* getCurrentVSpace();
+    vspace_t* newVSpace();
 };

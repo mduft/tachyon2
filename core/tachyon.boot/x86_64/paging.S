@@ -5,7 +5,8 @@
 
 SECTION_BOOT_DATA
 
-.global ia32e_pg_pml4
+.global x86_64_pg_pml4
+.global x86_64_temp_mapspace
 
 # .----------------------------------------.
 # | PT's, currently only for low memory,   |
@@ -13,23 +14,23 @@ SECTION_BOOT_DATA
 # | identity mapping the rest.             |
 # '----------------------------------------'
 
-.macro ia32e_pte cnt addr
+.macro x86_64_pte cnt addr
 .if \cnt
     .quad \addr + (PAGE_PRESENT | PAGE_WRITABLE)
-    ia32e_pte "(\cnt - 1)", "(\addr + 0x1000)"
+    x86_64_pte "(\cnt - 1)", "(\addr + 0x1000)"
 .endif
 .endm
 
 # 4KB - 2MB
 .align 0x1000
-ia32e_pg_pt_low:
+x86_64_pg_pt_low:
     .quad 0x0
-    ia32e_pte 0x64, 0x00001000
-    ia32e_pte 0x64, 0x00065000
-    ia32e_pte 0x64, 0x000C9000
-    ia32e_pte 0x64, 0x0012D000
-    ia32e_pte 0x64, 0x00191000
-    ia32e_pte 0x0B, 0x001F5000
+    x86_64_pte 0x64, 0x00001000
+    x86_64_pte 0x64, 0x00065000
+    x86_64_pte 0x64, 0x000C9000
+    x86_64_pte 0x64, 0x0012D000
+    x86_64_pte 0x64, 0x00191000
+    x86_64_pte 0x0B, 0x001F5000
 
 # .----------------------------------------.
 # | PD's, mapping 2MB pages, except low1,  |
@@ -39,17 +40,22 @@ ia32e_pg_pt_low:
 
 # 0MB - 4MB, rest (until 1GB) unmapped
 .align 0x1000
-ia32e_pg_pd_low:
-    .quad ia32e_pg_pt_low + ( PAGE_PRESENT | PAGE_WRITABLE )                # 0 - 2MB
+x86_64_pg_pd_low:
+    .quad x86_64_pg_pt_low + ( PAGE_PRESENT | PAGE_WRITABLE )               # 0 - 2MB
     .quad 0x200000        + ( PAGE_PRESENT | PAGE_WRITABLE | PAGE_LARGE )   # 2 - 4MB
     .fill 0x1FE, 0x8, 0x0 # 510 not present entries.                        # 4MB - 1GB unmap.
 
 # -2GB - (-2GB + 4MB), rest (until -1GB unmapped)
 .align 0x1000
-ia32e_pg_pd_high:
+x86_64_pg_pd_high:
     .quad 0x000000        + ( PAGE_PRESENT | PAGE_WRITABLE | PAGE_LARGE )   # 0 - 2MB (-2GB)
     .quad 0x200000        + ( PAGE_PRESENT | PAGE_WRITABLE | PAGE_LARGE )   # 2 - 4MB (-2GB)
     .fill 0x1FE, 0x8, 0x0                                                   # 4MB - -1GB unm.
+
+x86_64_pg_pd_temp:
+    .fill 0x1F6, 0x8, 0x0     # -1GB - (-0GB - 2MB) unm.
+    x86_64_temp_mapspace:
+    .fill 0xa, 0x8, 0x0       # -20MB- -0MB reserved for temporary mappings
 
 # .----------------------------------------.
 # | PDPT's, pointing to PD's               |
@@ -57,15 +63,15 @@ ia32e_pg_pd_high:
 
 # 0MB - 4MB, (0MB - 4MB (-2GB))
 .align 0x1000
-ia32e_pg_pdpt_low:
-    .quad ia32e_pg_pd_low + ( PAGE_PRESENT | PAGE_WRITABLE )        # 0 - 1GB
+x86_64_pg_pdpt_low:
+    .quad x86_64_pg_pd_low + ( PAGE_PRESENT | PAGE_WRITABLE )       # 0 - 1GB
     .fill 0x1FF, 0x8, 0x0                                           # 1GB - 512GB unmap.
 
 .align 0x1000
-ia32e_pg_pdpt_high:
+x86_64_pg_pdpt_high:
     .fill 0x1FE, 0x8, 0x0                                           # -512GB - -2GB unmap.
-    .quad ia32e_pg_pd_high + ( PAGE_PRESENT | PAGE_WRITABLE )       # -2GB - -1GB
-    .quad 0x0                                                       # -1GB - -0GB unmap.
+    .quad x86_64_pg_pd_high + ( PAGE_PRESENT | PAGE_WRITABLE )      # -2GB - -1GB
+    .quad x86_64_pg_pd_temp + ( PAGE_PRESENT | PAGE_WRITABLE )      # -1GB - -0GB
     
 
 # .----------------------------------------.
@@ -73,7 +79,7 @@ ia32e_pg_pdpt_high:
 # '----------------------------------------'
 
 .align 0x1000
-ia32e_pg_pml4:
-    .quad ia32e_pg_pdpt_low + ( PAGE_PRESENT | PAGE_WRITABLE )      # 0 - 512GB
+x86_64_pg_pml4:
+    .quad x86_64_pg_pdpt_low + ( PAGE_PRESENT | PAGE_WRITABLE )     # 0 - 512GB
     .fill 0x1FE, 0x8, 0x0                                           # 509 zero entries.
-    .quad ia32e_pg_pdpt_high + ( PAGE_PRESENT | PAGE_WRITABLE )     # -512GB - -0GB
+    .quad x86_64_pg_pdpt_high + ( PAGE_PRESENT | PAGE_WRITABLE )    # -512GB - -0GB

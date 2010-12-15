@@ -8,7 +8,8 @@
 #include <tachyon.logging/Log.h>
 #include <tachyon.boot/MultiBoot.h>
 #include <tachyon.memory/MemoryHelper.h>
-#include <tachyon.memory/PhysicalAllocator.h>
+#include <tachyon.memory/PhysicalMemory.h>
+#include <tachyon.memory/VirtualMemory.h>
 
 extern "C" uintptr_t CORE_LMA_START;
 extern "C" uintptr_t _core_lma_ebss;
@@ -53,7 +54,7 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
                 (range.isAvailable() ? " avail" : "!avail"));
 
             if(range.isAvailable()) {
-                PhysicalAllocator::instance().available(range.getStart(), range.getLength());
+                PhysicalMemory::instance().available(range.getStart(), range.getLength());
             }
         }
     }
@@ -61,14 +62,22 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
     /* reserve physical regions special to the kernel. reserved
      * regions from the system are not made available above in
      * the first place, so no need to reserve them now. */
-    PhysicalAllocator::instance().reserve(0x0, 0x100000);
-    PhysicalAllocator::instance().reserve(reinterpret_cast<uintptr_t>(&CORE_LMA_START),
+    PhysicalMemory::instance().reserve(0x0, 0x100000);
+    PhysicalMemory::instance().reserve(reinterpret_cast<uintptr_t>(&CORE_LMA_START),
         (reinterpret_cast<uintptr_t>(&_core_lma_ebss) + 0x1000) & ~0xFFF);
 
     /* test timestamp counter */
     uint64_t start = ctr.getCurrentTicks();
     uint64_t min = ctr.getCurrentTicks() - start;
     KINFO("min-ticks: %d\n", min);
+
+    /* test memory */
+    uintptr_t phys = PhysicalMemory::instance().allocateAligned(0x1000, 0x1000);
+    uintptr_t virt = VirtualMemory::instance().map(0, phys, 1, Page4K);
+
+    KINFO("phys: %p, virt: %p\n", phys, virt);
+
+    MemoryHelper::fill(reinterpret_cast<void*>(virt), 0xAB, 0x1000);
 
     /* temporary to see more screen output! */
     asm("cli; hlt;");

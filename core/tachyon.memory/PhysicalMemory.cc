@@ -1,10 +1,10 @@
 /* Copyright (c) 2010 by Markus Duft <mduft@gentoo.org>
  * This file is part of the 'tachyon' operating system. */
 
-#include <tachyon.memory/PhysicalAllocator.h>
+#include <tachyon.memory/PhysicalMemory.h>
 #include <tachyon.logging/Log.h>
 
-PhysicalAllocator PhysicalAllocator::inst;
+PhysicalMemory PhysicalMemory::inst;
 
 // scaling for 4K pages
 #define PAGE_SHIFT 12
@@ -16,7 +16,7 @@ PhysicalAllocator PhysicalAllocator::inst;
 #define ALIGN_DOWN(x, a)  ((x) & ~(a-1))
 #define ALIGN_UP(x, a)    ALIGN_DOWN((x) + a, a)
 
-void PhysicalAllocator::setRegion(uintptr_t start, uintptr_t length, bool value) {
+void PhysicalMemory::setRegion(uintptr_t start, uintptr_t length, bool value) {
     if(start & (PAGE_SIZE_DEFAULT-1) || (start + length) & (PAGE_SIZE_DEFAULT-1)) {
         KFATAL("physical memory region is not page aligned!\n");
     }
@@ -27,15 +27,15 @@ void PhysicalAllocator::setRegion(uintptr_t start, uintptr_t length, bool value)
     }
 }
 
-void PhysicalAllocator::available(uintptr_t start, uintptr_t length) {
+void PhysicalMemory::available(uintptr_t start, uintptr_t length) {
     setRegion(start, length, false);
 }
 
-void PhysicalAllocator::reserve(uintptr_t start, uintptr_t length) {
+void PhysicalMemory::reserve(uintptr_t start, uintptr_t length) {
     setRegion(start, length, true);
 }
 
-bool PhysicalAllocator::tryAllocate(uintptr_t phys, size_t length) {
+bool PhysicalMemory::tryAllocate(uintptr_t phys, size_t length) {
     register size_t off;
 
     // TODO: lock this!
@@ -58,7 +58,7 @@ bool PhysicalAllocator::tryAllocate(uintptr_t phys, size_t length) {
     return true;
 }
 
-uintptr_t PhysicalAllocator::allocateAligned(size_t length, size_t align) {
+uintptr_t PhysicalMemory::allocateAligned(size_t length, size_t align) {
     KASSERTM(align >= PAGE_SIZE_DEFAULT, 
         "alignment must be at least the physical page size");
 
@@ -82,7 +82,7 @@ uintptr_t PhysicalAllocator::allocateAligned(size_t length, size_t align) {
     return 0;
 }
 
-uintptr_t PhysicalAllocator::allocateFixed(uintptr_t phys, size_t length) {
+uintptr_t PhysicalMemory::allocateFixed(uintptr_t phys, size_t length) {
     KASSERTM(phys % PAGE_SIZE_DEFAULT == 0,
         "alignment of physical address must be a multiple of physical page size!");
 
@@ -93,7 +93,7 @@ uintptr_t PhysicalAllocator::allocateFixed(uintptr_t phys, size_t length) {
     return 0;
 }
 
-void PhysicalAllocator::free(uintptr_t phys, size_t length) {
+void PhysicalMemory::free(uintptr_t phys, size_t length) {
     register size_t off;
 
     for(off = 0; off < PAGE_COUNT(length); ++off) {
