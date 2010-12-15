@@ -7,6 +7,7 @@ SECTION_BOOT_DATA
 
 .global x86_64_pg_pml4
 .global x86_64_temp_mapspace
+.global x86_64_pg_pdpt_high
 
 # .----------------------------------------.
 # | PT's, currently only for low memory,   |
