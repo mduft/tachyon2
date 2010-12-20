@@ -58,7 +58,7 @@ bootstrap_x86_64:
     # only need to switch to long mode, and enable paging
 
     mov %cr4, %eax              # read CR4
-    bts $5, %eax                # set the PAE bit.
+    or $CR4_PAE, %eax           # set the PAE bit.
     mov %eax, %cr4              # and write it back.
 
     mov $IA32_EFER, %ecx        # read extended feature enabled register
@@ -72,8 +72,13 @@ bootstrap_x86_64:
     mov $x86_64_pg_pml4, %eax   # load the boot paging PML4
     mov %eax, %cr3              # set the new PML4
     mov %cr0, %eax              # read CR0
-    bts $31, %eax               # set the paging enabled bit.
+    or $CR0_PAGING, %eax        # set the paging enabled bit.
+    or $CR0_WRITE_PROTECT, %eax # enable write protection system wide for W/P pages.
     mov %eax, %cr0              # and write it back
+
+    mov %cr4, %eax              # again, load CR4
+    bts $CR4_GLOBAL_PAGES, %eax # must be done after setting CR0_PAGING!
+    mov %eax, %cr4              # and do it.
 
     ljmp $0x18,$bootstrap_x86_64_x64
 

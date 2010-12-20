@@ -103,6 +103,8 @@ uintptr_t inline allocatePStructAny() {
 
     pstructUnmap(virt);
 
+    KTRACE("allocated paging-structure @ %p\n", addr);
+
     return addr;
 }
 

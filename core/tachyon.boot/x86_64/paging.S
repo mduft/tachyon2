@@ -9,6 +9,8 @@ SECTION_BOOT_DATA
 .global x86_64_temp_mapspace
 .global x86_64_pg_pdpt_high
 
+#define PG_BASE_KFLAGS (PAGE_PRESENT | PAGE_WRITABLE | PAGE_GLOBAL)
+
 # .----------------------------------------.
 # | PT's, currently only for low memory,   |
 # | taking care of not mapping NULL, and   |
@@ -17,7 +19,7 @@ SECTION_BOOT_DATA
 
 .macro x86_64_pte cnt addr
 .if \cnt
-    .quad \addr + (PAGE_PRESENT | PAGE_WRITABLE)
+    .quad \addr + (PG_BASE_KFLAGS)
     x86_64_pte "(\cnt - 1)", "(\addr + 0x1000)"
 .endif
 .endm
@@ -42,16 +44,16 @@ x86_64_pg_pt_low:
 # 0MB - 4MB, rest (until 1GB) unmapped
 .align 0x1000
 x86_64_pg_pd_low:
-    .quad x86_64_pg_pt_low + ( PAGE_PRESENT | PAGE_WRITABLE )               # 0 - 2MB
-    .quad 0x200000        + ( PAGE_PRESENT | PAGE_WRITABLE | PAGE_LARGE )   # 2 - 4MB
-    .fill 0x1FE, 0x8, 0x0 # 510 not present entries.                        # 4MB - 1GB unmap.
+    .quad x86_64_pg_pt_low + ( PG_BASE_KFLAGS )               # 0 - 2MB
+    .quad 0x200000        + ( PG_BASE_KFLAGS | PAGE_LARGE )   # 2 - 4MB
+    .fill 0x1FE, 0x8, 0x0 # 510 not present entries.          # 4MB - 1GB unmap.
 
 # -2GB - (-2GB + 4MB), rest (until -1GB unmapped)
 .align 0x1000
 x86_64_pg_pd_high:
-    .quad 0x000000        + ( PAGE_PRESENT | PAGE_WRITABLE | PAGE_LARGE )   # 0 - 2MB (-2GB)
-    .quad 0x200000        + ( PAGE_PRESENT | PAGE_WRITABLE | PAGE_LARGE )   # 2 - 4MB (-2GB)
-    .fill 0x1FE, 0x8, 0x0                                                   # 4MB - -1GB unm.
+    .quad 0x000000        + ( PG_BASE_KFLAGS | PAGE_LARGE )   # 0 - 2MB (-2GB)
+    .quad 0x200000        + ( PG_BASE_KFLAGS | PAGE_LARGE )   # 2 - 4MB (-2GB)
+    .fill 0x1FE, 0x8, 0x0                                     # 4MB - -1GB unm.
 
 x86_64_pg_pd_temp:
     .fill 0x1F6, 0x8, 0x0     # -1GB - (-0GB - 2MB) unm.
@@ -65,14 +67,14 @@ x86_64_pg_pd_temp:
 # 0MB - 4MB, (0MB - 4MB (-2GB))
 .align 0x1000
 x86_64_pg_pdpt_low:
-    .quad x86_64_pg_pd_low + ( PAGE_PRESENT | PAGE_WRITABLE )       # 0 - 1GB
-    .fill 0x1FF, 0x8, 0x0                                           # 1GB - 512GB unmap.
+    .quad x86_64_pg_pd_low + ( PG_BASE_KFLAGS )       # 0 - 1GB
+    .fill 0x1FF, 0x8, 0x0                             # 1GB - 512GB unmap.
 
 .align 0x1000
 x86_64_pg_pdpt_high:
-    .fill 0x1FE, 0x8, 0x0                                           # -512GB - -2GB unmap.
-    .quad x86_64_pg_pd_high + ( PAGE_PRESENT | PAGE_WRITABLE )      # -2GB - -1GB
-    .quad x86_64_pg_pd_temp + ( PAGE_PRESENT | PAGE_WRITABLE )      # -1GB - -0GB
+    .fill 0x1FE, 0x8, 0x0                             # -512GB - -2GB unmap.
+    .quad x86_64_pg_pd_high + ( PG_BASE_KFLAGS )      # -2GB - -1GB
+    .quad x86_64_pg_pd_temp + ( PG_BASE_KFLAGS )      # -1GB - -0GB
     
 
 # .----------------------------------------.
@@ -81,6 +83,6 @@ x86_64_pg_pdpt_high:
 
 .align 0x1000
 x86_64_pg_pml4:
-    .quad x86_64_pg_pdpt_low + ( PAGE_PRESENT | PAGE_WRITABLE )     # 0 - 512GB
-    .fill 0x1FE, 0x8, 0x0                                           # 509 zero entries.
-    .quad x86_64_pg_pdpt_high + ( PAGE_PRESENT | PAGE_WRITABLE )    # -512GB - -0GB
+    .quad x86_64_pg_pdpt_low + ( PG_BASE_KFLAGS )     # 0 - 512GB
+    .fill 0x1FE, 0x8, 0x0                             # 509 zero entries.
+    .quad x86_64_pg_pdpt_high + ( PG_BASE_KFLAGS )    # -512GB - -0GB

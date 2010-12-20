@@ -20,7 +20,7 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
     /* make log output appear on the kernel console.
      * TODO: make this configurable (kernel command line?) */
     Log::instance()->addWriter(__kcon_write);
-    Log::instance()->setLevel(Log::Info);
+    Log::instance()->setLevel(Log::Trace);
 
     KINFO("booting tachyon on %s\n", TACHYON_ARCH);
     KTRACE("multiboot information at %p (magic: 0x%x)\n", mbd, mbm);
@@ -86,11 +86,12 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
     }
 
     uintptr_t phys2 = PhysicalMemory::instance().allocateAligned(0x200000, 0x200000);
-    uintptr_t virt = 0x2000000;
-    if(!VirtualMemory::instance().map(kernelSpace, virt, phys2, PAGE_LARGE | PAGE_WRITABLE | PAGE_USER)) {
+    uintptr_t virt = 0xF2000000;
+    if(!VirtualMemory::instance().map(kernelSpace, virt, phys2, PAGE_LARGE | PAGE_USER)) {
         KFATAL("failed to map %p -> %p\n",  virt, phys2);
     }
 
+    /* should cause a page fault (page write protected even to system)! */
     MemoryHelper::fill(reinterpret_cast<void*>(virt), 0xAA, 0x200000);
 
     KINFO("large: %p -> %p\n", virt, phys2);
