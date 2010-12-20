@@ -16,11 +16,12 @@ class VirtualMemory {
 public:
     static VirtualMemory& instance() { return inst; }
 
-    uintptr_t map(vspace_t* space, uintptr_t phys, size_t pages, pagesize_t size);
-    void unmap(vspace_t* space, uintptr_t virt, size_t pages);
+    bool map(vspace_t* space, uintptr_t virt, uintptr_t phys, uint32_t flags);
+    void unmap(vspace_t* space, uintptr_t virt);
 
     void activateVSpace(vspace_t* newSpace);
 
     vspace_t* getCurrentVSpace();
     vspace_t* newVSpace();
+    void deleteVSpace(vspace_t* space);
 };

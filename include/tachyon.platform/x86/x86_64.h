@@ -10,7 +10,7 @@ typedef unsigned long long  uintptr_t;
 
 typedef enum {
     Page4K,
-    Page4M
+    Page2M
 } pagesize_t;
 
 #include "x86_common.h"

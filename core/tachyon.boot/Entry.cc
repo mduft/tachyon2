@@ -72,12 +72,18 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
     KINFO("min-ticks: %d\n", min);
 
     /* test memory */
-    uintptr_t phys = PhysicalMemory::instance().allocateAligned(0x1000, 0x1000);
-    uintptr_t virt = VirtualMemory::instance().map(0, phys, 1, Page4K);
+    vspace_t* kernelSpace = VirtualMemory::instance().getCurrentVSpace();
+    uintptr_t phys = PhysicalMemory::instance().allocateAligned(0x1000, 0x10000);
+    for(int i = 0; i < 0x10; i++) {
+        uintptr_t virt = VirtualMemory::instance().map(kernelSpace, 0x1000000 + (0x1000 * i), phys + (0x1000 * i), PAGE_USER | PAGE_WRITABLE);
 
-    KINFO("phys: %p, virt: %p\n", phys, virt);
+        KINFO("small: %p -> %p\n", virt, phys + (0x1000 * i));
+    }
 
-    MemoryHelper::fill(reinterpret_cast<void*>(virt), 0xAB, 0x1000);
+    uintptr_t phys2 = PhysicalMemory::instance().allocateAligned(0x200000, 0x200000);
+    uintptr_t virt = VirtualMemory::instance().map(kernelSpace, 0x2000000, phys2, PAGE_LARGE | PAGE_WRITABLE | PAGE_USER);
+
+    KINFO("large: %p -> %p\n", virt, phys2);
 
     /* temporary to see more screen output! */
     asm("cli; hlt;");

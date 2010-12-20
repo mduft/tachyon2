@@ -65,7 +65,14 @@
 
 #define PAGE_PRESENT            (1 << 0)
 #define PAGE_WRITABLE           (1 << 1)
+#define PAGE_USER               (1 << 2)
+#define PAGE_WRITETHROUGH       (1 << 3)
+#define PAGE_NONCACHABLE        (1 << 4)
+#define PAGE_ACCESSED           (1 << 5)
+#define PAGE_DIRTY              (1 << 6)
 #define PAGE_LARGE              (1 << 7)
+#define PAGE_GLOBAL             (1 << 8)
+#define PAGE_EXECUTE_DISABLE    (1 << 63)
 
 #define PAGE_SIZE_4K            0x001000
 #define PAGE_SIZE_2M            0x200000
