@@ -7,6 +7,8 @@ SECTION_BOOT_DATA
 
 .global x86_pg_pd
 
+#define PG_BASE_KFLAGS  ( PAGE_PRESENT | PAGE_WRITABLE | PAGE_GLOBAL )
+
 # .----------------------------------------.
 # | PT's, currently only for low memory,   |
 # | taking care of not mapping NULL, and   |
@@ -15,7 +17,7 @@ SECTION_BOOT_DATA
 
 .macro x86_pte cnt addr
 .if \cnt
-    .long \addr + (PAGE_PRESENT | PAGE_WRITABLE)
+    .long \addr + ( PG_BASE_KFLAGS )
     x86_pte "(\cnt - 1)", "(\addr + 0x1000)"
 .endif
 .endm
@@ -45,9 +47,9 @@ x86_pg_pt:
 # 0MB - 4MB, rest (until 4GB) unmapped
 .align 0x1000
 x86_pg_pd:
-    .long x86_pg_pt + ( PAGE_PRESENT | PAGE_WRITABLE ) # 0 - 4MB
-    .fill 0x2FF, 0x4, 0x0 # 767 not present entries.
-    .long x86_pg_pt + ( PAGE_PRESENT | PAGE_WRITABLE )  # higher half map
-    .fill 0x0FF, 0x4, 0x0 # 255 not present entries.
+    .long x86_pg_pt + ( PG_BASE_KFLAGS ) # 0 - 4MB
+    .fill 0x2FF, 0x4, 0x0                # 767 not present entries.
+    .long x86_pg_pt + ( PG_BASE_KFLAGS ) # higher half map
+    .fill 0x0FF, 0x4, 0x0                # 255 not present entries.
 
 
