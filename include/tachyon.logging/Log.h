@@ -6,12 +6,14 @@
 #include <tachyon.platform/architecture.h>
 #include <tachyon.platform/external.h>
 
+#include <tachyon.memory/MemoryHelper.h>
+
 #define MAX_LOG_WRITERS 0x8
 #define MAX_WRITE_BUFFER 0x400
 #define MAX_NUMBER_DIGITS 0x20
 
 #define KLOG(lvl, fmt, ...) \
-    if(Log::instance()->getLevel() <= lvl) { Log::instance()->write("%10s:%4d: " fmt, __FUNCTION__,  __LINE__, __VA_ARGS__); }
+    if(Log::instance()->getLevel() <= lvl) { Log::instance()->write("%s:%4d: " fmt, reinterpret_cast<uint8_t const*>(MemoryHelper::rfind(__FILE__, '/', sizeof(__FILE__))) + 1,  __LINE__, __VA_ARGS__); }
 
 #define KTRACE(...) KLOG(Log::Trace,     __VA_ARGS__, 0); 
 #define KINFO(...)  KLOG(Log::Info,      __VA_ARGS__, 0);

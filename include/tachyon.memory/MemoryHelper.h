@@ -11,4 +11,7 @@ public:
     static void move(void* source, void* dest, size_t numBytes);
     static void zero(void* dest, size_t numBytes);
     static void fill(void* dest, uint8_t byte, size_t numBytes);
+
+    static void const* find(void const* mem, uint8_t byte, size_t length);
+    static void const* rfind(void const* mem, uint8_t byte, size_t length);
 };

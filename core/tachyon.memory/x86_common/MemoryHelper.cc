@@ -41,3 +41,22 @@ void MemoryHelper::fill(void* dest, uint8_t byte, size_t numBytes) {
         , "c" (numBytes)
         , "D" (dest));
 }
+
+void const* MemoryHelper::find(register void const* mem, uint8_t byte, register size_t length) {
+    register uint32_t i = 0;
+    while(i++ < length) {
+        if(*(reinterpret_cast<uint8_t const*>(mem) + i) == byte)
+            return (reinterpret_cast<uint8_t const*>(mem) + i);
+    }
+
+    return 0;
+}
+
+void const* MemoryHelper::rfind(register void const* mem, uint8_t byte, register size_t length) {
+    while(length--) {
+        if(*(reinterpret_cast<uint8_t const*>(mem) + length) == byte)
+            return (reinterpret_cast<uint8_t const*>(mem) + length);
+    }
+
+    return 0;
+}

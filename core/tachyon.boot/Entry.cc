@@ -20,7 +20,7 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
     /* make log output appear on the kernel console.
      * TODO: make this configurable (kernel command line?) */
     Log::instance()->addWriter(__kcon_write);
-    Log::instance()->setLevel(Log::Trace);
+    Log::instance()->setLevel(Log::Info);
 
     KINFO("booting tachyon on %s\n", TACHYON_ARCH);
     KTRACE("multiboot information at %p (magic: 0x%x)\n", mbd, mbm);
@@ -75,13 +75,23 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
     vspace_t* kernelSpace = VirtualMemory::instance().getCurrentVSpace();
     uintptr_t phys = PhysicalMemory::instance().allocateAligned(0x1000, 0x10000);
     for(int i = 0; i < 0x10; i++) {
-        uintptr_t virt = VirtualMemory::instance().map(kernelSpace, 0x1000000 + (0x1000 * i), phys + (0x1000 * i), PAGE_USER | PAGE_WRITABLE);
+        uintptr_t virt = 0x1000000 + (0x1000 * i);
+        if(!VirtualMemory::instance().map(kernelSpace, virt, phys + (0x1000 * i), PAGE_USER | PAGE_WRITABLE)) {
+            KFATAL("failed to map %p -> %p\n", virt, phys);
+        }
+
+        MemoryHelper::fill(reinterpret_cast<void*>(virt), i, 0x1000);
 
         KINFO("small: %p -> %p\n", virt, phys + (0x1000 * i));
     }
 
     uintptr_t phys2 = PhysicalMemory::instance().allocateAligned(0x200000, 0x200000);
-    uintptr_t virt = VirtualMemory::instance().map(kernelSpace, 0x2000000, phys2, PAGE_LARGE | PAGE_WRITABLE | PAGE_USER);
+    uintptr_t virt = 0x2000000;
+    if(!VirtualMemory::instance().map(kernelSpace, virt, phys2, PAGE_LARGE | PAGE_WRITABLE | PAGE_USER)) {
+        KFATAL("failed to map %p -> %p\n",  virt, phys2);
+    }
+
+    MemoryHelper::fill(reinterpret_cast<void*>(virt), 0xAA, 0x200000);
 
     KINFO("large: %p -> %p\n", virt, phys2);
 
