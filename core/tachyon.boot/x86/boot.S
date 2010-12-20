@@ -3,7 +3,7 @@
 
 #include <tachyon.platform/x86/asm/x86.h>
 
-.global bootstrap_x86
+.global x86_init
 .global abort
 
 # .------------------------------.
@@ -17,17 +17,10 @@
 # kernel itself from physical 0x100000 to 0xC0000000).
 
 .align 0x1000
-_kernel_pd:
-    .space 0x1000, 0x00
-_kernel_pt:
-    .space 0x1000, 0x00
-_kernel_low_pt:
-    .space 0x1000, 0x00
-
 # a whopping 64K of initial stack space.
-initstack:
+x86_core_stack:
     .space 0x10000, 0x00
-initstack_top:
+    x86_core_stack_top:
 
 # .------------------------------.
 # | TEXT Section                 |
@@ -43,31 +36,27 @@ SECTION_BOOT_TEXT
 .set MAGIC,         0x1BADB002       # 'magic number' lets bootloader find the header
 .set CHECKSUM,      -(MAGIC + FLAGS) # checksum required
 
-.set VIDEO_RAM,     0xB8000          # Video Memory, used to print to the screen.
-.set VIDEO_DWORDS,  0x3E8            # The count of DWORDs (!) the screen buffer is large.
-
 .align 4
-
-multiboot_header:
+x86_mbhdr:
     .long MAGIC
     .long FLAGS
     .long CHECKSUM
-    .long multiboot_header
+    .long x86_mbhdr
     .long CORE_LMA_START
     .long 0
     .long 0
-    .long bootstrap_x86
+    .long x86_init
 
-bootstrap_x86:
+x86_init:
     # setup the stack
-    mov   $initstack_top, %esp
+    mov   $x86_core_stack_top, %esp
 
     # adjust address to be physical, stack is in data segment, which is linked to
     # the kernels virtual higher half address.
     subl  $CORE_VMA_X86, %esp
 
     # setup a 32 bit gdt.
-    lgdt  (ia32_gdt_ptr)
+    lgdt  (x86_gdt_ptr)
 
     ljmp $0x8,$1f
 1:
@@ -82,11 +71,21 @@ bootstrap_x86:
 
     # setup boot paging to map kernel to higher half
 
-    mov $ia32_pg_pd, %eax       # load 32 bit PD
-    mov %eax, %cr3              # and activate it.
-    mov %cr0, %eax              # get current cr0
-    bts $31, %eax               # set paging bit
-    mov %eax, %cr0              # and set the new value
+    # TODO: PAE paging
+    #mov %cr4, %eax              # read CR4
+    #or $CR4_PAE, %eax           # set the PAE bit.
+    #mov %eax, %cr4              # and write it back.
+
+    mov $x86_pg_pd, %eax         # load 32 bit PD
+    mov %eax, %cr3               # and activate it.
+    mov %cr0, %eax               # get current cr0
+    or $CR0_PAGING, %eax         # set paging bit
+    or $CR0_WRITE_PROTECT, %eax  # enable global write protection
+    mov %eax, %cr0               # and set the new value
+
+    mov %cr4, %eax               # again, load CR4
+    bts $CR4_GLOBAL_PAGES, %eax  # must be done after setting CR0_PAGING!
+    mov %eax, %cr4               # and do it.
     pop %eax
 
     # adjust stack registers to point to the now mapped stack as virtual address
@@ -101,8 +100,6 @@ bootstrap_x86:
     # push parameters to the entry point (grub parameters)
     push  %eax
     push  %ebx
-
-    # TODO: assure that the multiboot information is mapped!
 
     # .------------------------------------.
     # | Main kernel entry (C/C++)          |
