@@ -15,8 +15,8 @@ VirtualMemory VirtualMemory::inst;
 
 #define PSTRUCT_SIZE    0x1000
 #define PSTRUCT_FLAGS   0xFFF
-#define TEMPMAP_ADDR(x) (((~0x0ull) & ~(PAGE_SIZE_2M -1)) - (x * PAGE_SIZE_2M))
 #define TEMPMAP_PAGES   0xa
+#define TEMPMAP_ADDR(x) (((~0x0ull & ~(PAGE_SIZE_2M - 1)) - ((TEMPMAP_PAGES -1) * PAGE_SIZE_2M)) + (x * PAGE_SIZE_2M))
 #define INVALIDATE(x)   asm volatile("invlpg (%0)" :: "r" ((x)));
 
 extern "C" uintptr_t x86_64_temp_mapspace;
@@ -43,7 +43,7 @@ uintptr_t inline pstructMap(register void* phys) {
     register uintptr_t physOff  = (reinterpret_cast<uintptr_t>(phys) & (PAGE_SIZE_2M-1));
 
     for(register uint32_t i = 0; i < TEMPMAP_PAGES; ++i) {
-        if((tempMappings[i] & ~(PAGE_SIZE_2M-1)) == physPage) {
+        if(tempMappings[i] & PAGE_PRESENT && (tempMappings[i] & ~(PAGE_SIZE_2M-1)) == physPage) {
             /* the physical address is already somewhere within the current
              * temporary mapping. this may be a 4K page near the only mapped
              * before, or the same (4K or 2M) page as before. */
