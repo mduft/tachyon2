@@ -24,7 +24,6 @@ SECTION_BOOT_DATA
 .endif
 .endm
 
-# 4KB - 2MB
 .align 0x1000
 x86_64_pg_pt_low:
     .quad 0x0
@@ -41,20 +40,19 @@ x86_64_pg_pt_low:
 # | 4KB (NULL!) are unmapped!              |
 # '----------------------------------------'
 
-# 0MB - 4MB, rest (until 1GB) unmapped
 .align 0x1000
 x86_64_pg_pd_low:
     .quad x86_64_pg_pt_low + ( PG_BASE_KFLAGS )               # 0 - 2MB
     .quad 0x200000        + ( PG_BASE_KFLAGS | PAGE_LARGE )   # 2 - 4MB
     .fill 0x1FE, 0x8, 0x0 # 510 not present entries.          # 4MB - 1GB unmap.
 
-# -2GB - (-2GB + 4MB), rest (until -1GB unmapped)
 .align 0x1000
 x86_64_pg_pd_high:
     .quad 0x000000        + ( PG_BASE_KFLAGS | PAGE_LARGE )   # 0 - 2MB (-2GB)
     .quad 0x200000        + ( PG_BASE_KFLAGS | PAGE_LARGE )   # 2 - 4MB (-2GB)
     .fill 0x1FE, 0x8, 0x0                                     # 4MB - -1GB unm.
 
+.align 0x1000
 x86_64_pg_pd_temp:
     .fill 0x1F6, 0x8, 0x0     # -1GB - (-0GB - 2MB) unm.
     x86_64_temp_mapspace:
@@ -64,7 +62,6 @@ x86_64_pg_pd_temp:
 # | PDPT's, pointing to PD's               |
 # '----------------------------------------'
 
-# 0MB - 4MB, (0MB - 4MB (-2GB))
 .align 0x1000
 x86_64_pg_pdpt_low:
     .quad x86_64_pg_pd_low + ( PG_BASE_KFLAGS )       # 0 - 1GB

@@ -20,7 +20,7 @@ VirtualMemory VirtualMemory::inst;
 #define INVALIDATE(x)   asm volatile("invlpg (%0)" :: "r" ((x)));
 
 extern "C" phys_addr_t x86_temp_mapspace;
-extern "C" phys_addr_t x86_pd;
+extern "C" phys_addr_t x86_pg_pdpt;
 
 namespace {
 
@@ -308,7 +308,7 @@ vspace_t VirtualMemory::newVSpace() {
      * in which address space it is running.
      * the access to the mapped pages has a DPL=0, so only the kernel
      * can access it, user space cannot. */
-    space[4] = reinterpret_cast<phys_addr_t>(&x86_pd) | PAGE_PRESENT | PAGE_WRITABLE;
+    space[4] = reinterpret_cast<phys_addr_t>(&x86_pg_pdpt) | PAGE_PRESENT | PAGE_WRITABLE;
 
     return reinterpret_cast<vspace_t>(space);
 }
@@ -317,7 +317,7 @@ void VirtualMemory::deleteVSpace(vspace_t space) {
     /* TODO: free physical memory for paging structures (DEPTH!) */
     register phys_addr_t* pdpt = reinterpret_cast<phys_addr_t*>(pstructMap(space));
     for(register uintptr_t pdpte = 0; pdpte < 4; ++pdpte) {
-        if(pdpt[pdpte] & PAGE_PRESENT && pdpt[pdpte] != reinterpret_cast<phys_addr_t>(&x86_pd)) {
+        if(pdpt[pdpte] & PAGE_PRESENT && pdpt[pdpte] != reinterpret_cast<phys_addr_t>(&x86_pg_pdpt)) {
             register phys_addr_t* pd = reinterpret_cast<phys_addr_t*>(
                 pstructMap(pdpt[pdpte]));
 
