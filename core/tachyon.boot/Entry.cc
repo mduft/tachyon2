@@ -81,6 +81,7 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
         KINFO("small: %p -> %p\n", virt, phys + (0x1000 * i));
     }
 
+    #ifdef __X86_64__
     phys_addr_t phys2 = PhysicalMemory::instance().allocateAligned(0x200000, 0x200000);
     uintptr_t virt = 0xF2000000;
     if(!VirtualMemory::instance().map(kernelSpace, virt, phys2, PAGE_LARGE | PAGE_USER | PAGE_WRITABLE)) {
@@ -90,6 +91,7 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
     MemoryHelper::fill(reinterpret_cast<void*>(virt), 0xAA, 0x200000);
 
     KINFO("large: %p -> %p\n", virt, phys2);
+    #endif
 
 
     /* temporary to see more screen output! */

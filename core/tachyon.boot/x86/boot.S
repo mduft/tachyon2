@@ -71,11 +71,11 @@ x86_init:
 
     # setup boot paging to map kernel to higher half
 
-    mov %cr4, %eax              # read CR4
-    or $CR4_PAE, %eax           # set the PAE bit.
-    mov %eax, %cr4              # and write it back.
+    #mov %cr4, %eax               # read CR4
+    #or $CR4_PAE, %eax            # set the PAE bit.
+    #mov %eax, %cr4               # and write it back.
 
-    mov $x86_pg_pdpt, %eax       # load 32 bit PDPT
+    mov $x86_pg_pd, %eax         # load 32 bit PD
     mov %eax, %cr3               # and activate it.
     mov %cr0, %eax               # get current cr0
     or $CR0_PAGING, %eax         # set paging bit
@@ -83,7 +83,7 @@ x86_init:
     mov %eax, %cr0               # and set the new value
 
     mov %cr4, %eax               # again, load CR4
-    bts $CR4_GLOBAL_PAGES, %eax  # must be done after setting CR0_PAGING!
+    or $CR4_GLOBAL_PAGES, %eax   # must be done after setting CR0_PAGING!
     mov %eax, %cr4               # and do it.
     pop %eax
 

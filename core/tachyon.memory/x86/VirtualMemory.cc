@@ -16,11 +16,11 @@ VirtualMemory VirtualMemory::inst;
 #define PSTRUCT_SIZE    0x1000
 #define PSTRUCT_FLAGS   0xFFF
 #define TEMPMAP_PAGES   0xa
-#define TEMPMAP_ADDR(x) (((~0x0 & ~(PAGE_SIZE_2M - 1)) - ((TEMPMAP_PAGES -1) * PAGE_SIZE_2M)) + (x * PAGE_SIZE_2M))
+#define TEMPMAP_ADDR(x) (((~0x0 & ~(PAGE_SIZE_4K - 1)) - ((TEMPMAP_PAGES -1) * PAGE_SIZE_4K)) + (x * PAGE_SIZE_4K))
 #define INVALIDATE(x)   asm volatile("invlpg (%0)" :: "r" ((x)));
 
 extern "C" phys_addr_t x86_temp_mapspace;
-extern "C" phys_addr_t x86_pg_pdpt;
+extern "C" phys_addr_t x86_pg_pd;
 
 namespace {
 
@@ -38,11 +38,11 @@ phys_addr_t* tempMappings = &x86_temp_mapspace;
  * \return      the virtual address that the pysical has been mapped to
  */
 uintptr_t inline pstructMap(register phys_addr_t phys) {
-    register phys_addr_t physPage = (phys & ~(PAGE_SIZE_2M-1));
-    register phys_addr_t physOff  = (phys & (PAGE_SIZE_2M-1));
+    register phys_addr_t physPage = (phys & ~(PAGE_SIZE_4K-1));
+    register phys_addr_t physOff  = (phys & (PAGE_SIZE_4K-1));
 
     for(register uint32_t i = 0; i < TEMPMAP_PAGES; ++i) {
-        if(tempMappings[i] & PAGE_PRESENT && (tempMappings[i] & ~(PAGE_SIZE_2M-1)) == physPage) {
+        if(tempMappings[i] & PAGE_PRESENT && (tempMappings[i] & ~(PAGE_SIZE_4K-1)) == physPage) {
             /* the physical address is already somewhere within the current
              * temporary mapping. this may be a 4K page near the only mapped
              * before, or the same (4K or 2M) page as before. */
@@ -50,14 +50,9 @@ uintptr_t inline pstructMap(register phys_addr_t phys) {
         }
     }
 
-    /* ATTENTION, ATTENTION: the maps both large and small pages
-     * the same way, and returns the correct location for the
-     * physical memory region's start. However more memory before
-     * and after the page may be mapped. */
-
     for(register uint32_t i = 0; i < TEMPMAP_PAGES; ++i) {
         if(tempMappings[i] == 0) {
-            tempMappings[i] = physPage | PAGE_PRESENT | PAGE_LARGE | PAGE_WRITABLE | PAGE_GLOBAL;
+            tempMappings[i] = physPage | PAGE_PRESENT | PAGE_WRITABLE | PAGE_GLOBAL;
             INVALIDATE(TEMPMAP_ADDR(i));
             return TEMPMAP_ADDR(i) | physOff;
         }
@@ -112,28 +107,11 @@ void inline freePStructAny(phys_addr_t addr) {
     PhysicalMemory::instance().free(addr & ~(PSTRUCT_FLAGS), PSTRUCT_SIZE);
 }
 
-bool inline splitVirtualAndMap(vspace_t space, uintptr_t virt, uintptr_t& pdpt, uintptr_t& pd, uintptr_t& pt, bool large, bool forcePresent) {
-    register uintptr_t pdpte = (virt >> 30);
-    register uintptr_t pde   = (virt >> 21) & 0x1FF;
+bool inline splitVirtualAndMap(vspace_t space, uintptr_t virt, uintptr_t& pd, uintptr_t& pt, bool forcePresent) {
+    register uintptr_t pde   = (virt >> 21) & 0x3FF;
     register phys_addr_t* curPs;
     
-    pdpt = pstructMap(space);
-    curPs = reinterpret_cast<phys_addr_t*>(pdpt);
-
-    if(!pdpt) {
-        KERROR("cannot map pdpt for address space %p\n", space);
-        return false;
-    }
-
-    if(!(curPs[pdpte] & PAGE_PRESENT)) {
-        if(forcePresent) {
-            KWARN("virtual address expected to be present was not (%p)\n", virt);
-            return false;
-        }
-        curPs[pdpte] = allocatePStructAny() | PAGE_PRESENT | PAGE_WRITABLE;
-    }
-
-    pd = pstructMap(curPs[pdpte] & ~PSTRUCT_FLAGS);
+    pd = pstructMap(space);
     curPs = reinterpret_cast<phys_addr_t*>(pd);
 
     if(!pd) {
@@ -141,28 +119,20 @@ bool inline splitVirtualAndMap(vspace_t space, uintptr_t virt, uintptr_t& pdpt, 
         return false;
     }
 
-    if(forcePresent) {
-        /* ATTENTION: large is overridden by the PDE in case we force
-         * presence of to virtual address */
-        large = (curPs[pde] & PAGE_PRESENT && curPs[pde] & PAGE_LARGE);
-    }
-
-    if(!large) {
-        if(!(curPs[pde] & PAGE_PRESENT)) {
-            if(forcePresent) {
-                KWARN("virtual address expected to be present was not (%p)\n", virt);
-                return false;
-            }
-            curPs[pde] = allocatePStructAny() | PAGE_PRESENT | PAGE_WRITABLE;
-        }
-
-        pt = pstructMap(curPs[pde] & ~PSTRUCT_FLAGS);
-        curPs = reinterpret_cast<phys_addr_t*>(pt);
-
-        if(!pt) {
-            KERROR("cannot map pt for address space %p\n", space);
+    if(!(curPs[pde] & PAGE_PRESENT)) {
+        if(forcePresent) {
+            KWARN("virtual address expected to be present was not (%p)\n", virt);
             return false;
         }
+        curPs[pde] = allocatePStructAny() | PAGE_PRESENT | PAGE_WRITABLE;
+    }
+
+    pt = pstructMap(curPs[pde] & ~PSTRUCT_FLAGS);
+    curPs = reinterpret_cast<phys_addr_t*>(pt);
+
+    if(!pt) {
+        KERROR("cannot map pt for address space %p\n", space);
+        return false;
     }
 
     return true;
@@ -184,40 +154,22 @@ bool inline splitVirtualAndMap(vspace_t space, uintptr_t virt, uintptr_t& pdpt, 
 bool VirtualMemory::map(vspace_t space, uintptr_t virt, phys_addr_t phys, uint32_t flags) {
     /* TODO: lock this! */
 
-    uintptr_t pdpt, pd, pt;
-    if(!splitVirtualAndMap(space, virt, pdpt, pd, pt, (flags & PAGE_LARGE), false)) {
+    uintptr_t pd, pt;
+    if(!splitVirtualAndMap(space, virt, pd, pt, false)) {
         KFATAL("failed to split and map virtual address\n");
     }
     
-    register uintptr_t pde   = (virt >> 21) & 0x1FF;
-
-    register phys_addr_t* ppd = reinterpret_cast<phys_addr_t*>(pd);
+    register uintptr_t pte   = (virt >> 12) & 0x3FF;
     register phys_addr_t* ppt = reinterpret_cast<phys_addr_t*>(pt);
 
-    if(flags & PAGE_LARGE) {
-        if(ppd[pde] & PAGE_PRESENT) {
-            KFATAL("page already present for address space %p\n", space);
-        }
-
-        ppd[pde] = phys | PAGE_PRESENT | flags;
-    } else {
-        register uintptr_t pte   = (virt >> 12) & 0x1FF;
-
-        if(ppd[pde] & PAGE_LARGE) {
-            KFATAL("large page present at location for small page in address space %p\n", space);
-        }
-
-        if(ppt[pte] & PAGE_PRESENT) {
-            KFATAL("page already present for address space %p\n", space);
-        }
-
-        ppt[pte] = phys | PAGE_PRESENT | flags;
-
-        pstructUnmap(pt);
+    if(ppt[pte] & PAGE_PRESENT) {
+        KFATAL("page already present for address space %p\n", space);
     }
 
+    ppt[pte] = phys | PAGE_PRESENT | flags;
+
+    pstructUnmap(pt);
     pstructUnmap(pd);
-    pstructUnmap(pdpt);
 
     KTRACE("virtual-mapped %p -> %p (flags: 0x%x)\n", virt, phys, flags | PAGE_PRESENT);
 
@@ -237,12 +189,13 @@ bool VirtualMemory::map(vspace_t space, uintptr_t virt, phys_addr_t phys, uint32
 void VirtualMemory::unmap(vspace_t space, uintptr_t virt) {
     /* TODO: lock this! */
 
-    uintptr_t pdpt, pd, pt;
-    if(!splitVirtualAndMap(space, virt, pdpt, pd, pt, false, true)) {
+    uintptr_t pd, pt;
+    if(!splitVirtualAndMap(space, virt, pd, pt, true)) {
         KFATAL("failed to split and map virtual address\n");
     }
 
-    register uintptr_t pde   = (virt >> 21) & 0x1FF;
+    register uintptr_t pde   = (virt >> 21) & 0x3FF;
+    register uintptr_t pte   = (virt >> 12) & 0x3FF;
     register phys_addr_t* ppd = reinterpret_cast<phys_addr_t*>(pd);
     register phys_addr_t* ppt = reinterpret_cast<phys_addr_t*>(pt);
 
@@ -251,22 +204,9 @@ void VirtualMemory::unmap(vspace_t space, uintptr_t virt) {
         return;
     }
 
-    if(ppd[pde] & PAGE_LARGE) {
-        register uintptr_t pte   = (virt >> 12) & 0x1FF;
-
-        if(ppd[pde] & PAGE_LARGE) {
-            KWARN("pd contains a large page, not a pt for virtual address %p\n", virt);
-            return;
-        }
-
-        ppt[pte] = 0;
-        pstructUnmap(pt);
-    } else {
-        ppd[pde] = 0;
-    }
-
+    ppt[pte] = 0;
+    pstructUnmap(pt);
     pstructUnmap(pd);
-    pstructUnmap(pdpt);
     INVALIDATE(virt);
 }
 
@@ -308,30 +248,23 @@ vspace_t VirtualMemory::newVSpace() {
      * in which address space it is running.
      * the access to the mapped pages has a DPL=0, so only the kernel
      * can access it, user space cannot. */
-    space[4] = reinterpret_cast<phys_addr_t>(&x86_pg_pdpt) | PAGE_PRESENT | PAGE_WRITABLE;
+    space[4] = reinterpret_cast<phys_addr_t>(&x86_pg_pd) | PAGE_PRESENT | PAGE_WRITABLE;
 
     return reinterpret_cast<vspace_t>(space);
 }
 
 void VirtualMemory::deleteVSpace(vspace_t space) {
     /* TODO: free physical memory for paging structures (DEPTH!) */
-    register phys_addr_t* pdpt = reinterpret_cast<phys_addr_t*>(pstructMap(space));
-    for(register uintptr_t pdpte = 0; pdpte < 4; ++pdpte) {
-        if(pdpt[pdpte] & PAGE_PRESENT && pdpt[pdpte] != reinterpret_cast<phys_addr_t>(&x86_pg_pdpt)) {
-            register phys_addr_t* pd = reinterpret_cast<phys_addr_t*>(
-                pstructMap(pdpt[pdpte]));
+    register phys_addr_t* pd = reinterpret_cast<phys_addr_t*>(
+        pstructMap(space));
 
-            for(register uintptr_t pde = 0; pde < 512; ++pde) {
-                if(pd[pde] & PAGE_PRESENT && !(pd[pde] & PAGE_LARGE)) {
-                    freePStructAny(pd[pde]);
-                }
-            }
-
-            pstructUnmap(reinterpret_cast<phys_addr_t>(pd));
-            freePStructAny(pdpt[pdpte]);
+    for(register uintptr_t pde = 0; pde < 1024; ++pde) {
+        if(pd[pde] & PAGE_PRESENT ) {
+            /* TODO: don't free kernel PTs! */
+            freePStructAny(pd[pde]);
         }
     }
 
-    pstructUnmap(reinterpret_cast<phys_addr_t>(pdpt));
-    freePStructAny(reinterpret_cast<phys_addr_t>(pdpt));
+    pstructUnmap(reinterpret_cast<phys_addr_t>(pd));
+    freePStructAny(static_cast<phys_addr_t>(space));
 }
