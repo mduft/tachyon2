@@ -38,6 +38,12 @@ typedef intptr_t    intmax_t;
 typedef uintptr_t   uintmax_t;
 typedef intmax_t    off_t;
 
+/* this one is the same for 32 and 64 bit, as we use PAE paging in 32 bit,
+ * which translates from 32 bit virtual to 52 bit (currently) physical
+ * addresses. */
+typedef uint64_t    phys_addr_t;
+typedef phys_addr_t vspace_t;
+
 typedef struct {
     uintptr_t   cr4;
     uintptr_t   cr3;

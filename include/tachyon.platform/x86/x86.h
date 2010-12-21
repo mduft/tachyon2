@@ -10,10 +10,10 @@ typedef unsigned int    uintptr_t;
 
 typedef enum {
     Page4K,
-    Page4M
+    Page2M
 } pagesize_t;
 
 #include "x86_common.h"
 
 #define PAGE_SIZE_DEFAULT       PAGE_SIZE_4K
-#define PAGE_SIZE_KERNEL        PAGE_SIZE_4M
+#define PAGE_SIZE_KERNEL        PAGE_SIZE_2M

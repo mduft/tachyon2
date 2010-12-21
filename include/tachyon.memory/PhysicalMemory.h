@@ -16,15 +16,15 @@ class PhysicalMemory {
         spBitmap.setAll(true);
     }
 
-    void setRegion(uintptr_t start, uintptr_t length, bool value);
-    bool tryAllocate(uintptr_t phys, size_t length);
+    void setRegion(phys_addr_t start, phys_addr_t end, bool value);
+    bool tryAllocate(phys_addr_t phys, size_t length);
 public:
     static PhysicalMemory& instance() { return inst; }
 
-    void available(uintptr_t start, uintptr_t length);
-    void reserve(uintptr_t start, uintptr_t length);
+    void available(phys_addr_t start, phys_addr_t end);
+    void reserve(phys_addr_t start, phys_addr_t end);
 
-    uintptr_t allocateAligned(size_t length, size_t align);
-    uintptr_t allocateFixed(uintptr_t phys, size_t length);
-    void free(uintptr_t phys, size_t length);
+    phys_addr_t allocateAligned(size_t length, size_t align);
+    phys_addr_t allocateFixed(phys_addr_t phys, size_t length);
+    void free(phys_addr_t phys, size_t length);
 };

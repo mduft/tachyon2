@@ -16,19 +16,18 @@ VirtualMemory VirtualMemory::inst;
 #define PSTRUCT_SIZE    0x1000
 #define PSTRUCT_FLAGS   0xFFF
 #define TEMPMAP_PAGES   0xa
-#define TEMPMAP_ADDR(x) (((~0x0ull & ~(PAGE_SIZE_2M - 1)) - ((TEMPMAP_PAGES -1) * PAGE_SIZE_2M)) + (x * PAGE_SIZE_2M))
+#define TEMPMAP_ADDR(x) (((~0x0 & ~(PAGE_SIZE_2M - 1)) - ((TEMPMAP_PAGES -1) * PAGE_SIZE_2M)) + (x * PAGE_SIZE_2M))
 #define INVALIDATE(x)   asm volatile("invlpg (%0)" :: "r" ((x)));
 
-extern "C" phys_addr_t x86_64_temp_mapspace;
-extern "C" phys_addr_t x86_64_pg_pml4;
-extern "C" phys_addr_t x86_64_pg_pdpt_high;
+extern "C" phys_addr_t x86_temp_mapspace;
+extern "C" phys_addr_t x86_pd;
 
 namespace {
 
 /**
  * contains the temporary mapped addresses.
  */
-phys_addr_t* tempMappings = &x86_64_temp_mapspace;
+phys_addr_t* tempMappings = &x86_temp_mapspace;
 
 /**
  * temporarily map a page into the kernels virtual address space.
@@ -113,29 +112,12 @@ void inline freePStructAny(phys_addr_t addr) {
     PhysicalMemory::instance().free(addr & ~(PSTRUCT_FLAGS), PSTRUCT_SIZE);
 }
 
-bool inline splitVirtualAndMap(vspace_t space, uintptr_t virt, uintptr_t& pml4, uintptr_t& pdpt, uintptr_t& pd, uintptr_t& pt, bool large, bool forcePresent) {
-    register uintptr_t pml4e = (virt >> 39);
-    register uintptr_t pdpte = (virt >> 30) & 0x1FF;
+bool inline splitVirtualAndMap(vspace_t space, uintptr_t virt, uintptr_t& pdpt, uintptr_t& pd, uintptr_t& pt, bool large, bool forcePresent) {
+    register uintptr_t pdpte = (virt >> 30);
     register uintptr_t pde   = (virt >> 21) & 0x1FF;
     register phys_addr_t* curPs;
     
-    pml4 = pstructMap(space);
-    curPs = reinterpret_cast<phys_addr_t*>(pml4);
-
-    if(!pml4) {
-        KERROR("cannot map pml4 for address space %p\n", space);
-        return false;
-    }
-
-    if(!(curPs[pml4e] & PAGE_PRESENT)) {
-        if(forcePresent) {
-            KWARN("virtual address expected to be present was not (%p)\n", virt);
-            return false;
-        }
-        curPs[pml4e] = allocatePStructAny() | PAGE_PRESENT | PAGE_WRITABLE;
-    }
-
-    pdpt = pstructMap(curPs[pml4e] & ~PSTRUCT_FLAGS);
+    pdpt = pstructMap(space);
     curPs = reinterpret_cast<phys_addr_t*>(pdpt);
 
     if(!pdpt) {
@@ -202,8 +184,8 @@ bool inline splitVirtualAndMap(vspace_t space, uintptr_t virt, uintptr_t& pml4, 
 bool VirtualMemory::map(vspace_t space, uintptr_t virt, phys_addr_t phys, uint32_t flags) {
     /* TODO: lock this! */
 
-    uintptr_t pml4, pdpt, pd, pt;
-    if(!splitVirtualAndMap(space, virt, pml4, pdpt, pd, pt, (flags & PAGE_LARGE), false)) {
+    uintptr_t pdpt, pd, pt;
+    if(!splitVirtualAndMap(space, virt, pdpt, pd, pt, (flags & PAGE_LARGE), false)) {
         KFATAL("failed to split and map virtual address\n");
     }
     
@@ -236,7 +218,6 @@ bool VirtualMemory::map(vspace_t space, uintptr_t virt, phys_addr_t phys, uint32
 
     pstructUnmap(pd);
     pstructUnmap(pdpt);
-    pstructUnmap(pml4);
 
     KTRACE("virtual-mapped %p -> %p (flags: 0x%x)\n", virt, phys, flags | PAGE_PRESENT);
 
@@ -256,8 +237,8 @@ bool VirtualMemory::map(vspace_t space, uintptr_t virt, phys_addr_t phys, uint32
 void VirtualMemory::unmap(vspace_t space, uintptr_t virt) {
     /* TODO: lock this! */
 
-    uintptr_t pml4, pdpt, pd, pt;
-    if(!splitVirtualAndMap(space, virt, pml4, pdpt, pd, pt, false, true)) {
+    uintptr_t pdpt, pd, pt;
+    if(!splitVirtualAndMap(space, virt, pdpt, pd, pt, false, true)) {
         KFATAL("failed to split and map virtual address\n");
     }
 
@@ -286,7 +267,6 @@ void VirtualMemory::unmap(vspace_t space, uintptr_t virt) {
 
     pstructUnmap(pd);
     pstructUnmap(pdpt);
-    pstructUnmap(pml4);
     INVALIDATE(virt);
 }
 
@@ -305,16 +285,18 @@ void VirtualMemory::activateVSpace(vspace_t space) {
  * \return      the currently active address space.
  */
 vspace_t VirtualMemory::getCurrentVSpace() {
-    vspace_t p;
+    uintptr_t p;
 
-    asm("mov %%cr3, %%rax" : "=a" (p));
+    asm("mov %%cr3, %%eax" : "=a" (p));
 
-    return p;
+    return static_cast<vspace_t>(p);
 }
 
 /**
  * creates a new (and empty) address space. The kernel is mapped in the high
- * address ranges of the new address space.
+ * address ranges of the new address space. This wastes some memory (it
+ * allocates a full PDPT as with the 64 bit paging for simplicity). It would
+ * be possible to save a few KiBs (~3-4) per process here.
  *
  * \return      the virtual address space.
  */
@@ -326,43 +308,30 @@ vspace_t VirtualMemory::newVSpace() {
      * in which address space it is running.
      * the access to the mapped pages has a DPL=0, so only the kernel
      * can access it, user space cannot. */
-    space[511] = reinterpret_cast<phys_addr_t>(&x86_64_pg_pdpt_high) | PAGE_PRESENT | PAGE_WRITABLE;
+    space[4] = reinterpret_cast<phys_addr_t>(&x86_pd) | PAGE_PRESENT | PAGE_WRITABLE;
 
     return reinterpret_cast<vspace_t>(space);
 }
 
 void VirtualMemory::deleteVSpace(vspace_t space) {
     /* TODO: free physical memory for paging structures (DEPTH!) */
+    register phys_addr_t* pdpt = reinterpret_cast<phys_addr_t*>(pstructMap(space));
+    for(register uintptr_t pdpte = 0; pdpte < 4; ++pdpte) {
+        if(pdpt[pdpte] & PAGE_PRESENT && pdpt[pdpte] != reinterpret_cast<phys_addr_t>(&x86_pd)) {
+            register phys_addr_t* pd = reinterpret_cast<phys_addr_t*>(
+                pstructMap(pdpt[pdpte]));
 
-    register phys_addr_t* pml4 = reinterpret_cast<phys_addr_t*>(pstructMap(space));
-    for(register uintptr_t pml4e = 0; pml4e < 511; ++pml4e) {
-        if(pml4[pml4e] & PAGE_PRESENT && (pml4[pml4e] & ~(PSTRUCT_FLAGS)) != 
-                reinterpret_cast<phys_addr_t>(&x86_64_pg_pdpt_high)) {
-
-            /* a user-level pml4 entry, so free it (recursively) */
-            register phys_addr_t* pdpt = reinterpret_cast<phys_addr_t*>(
-                pstructMap(pml4[pml4e]));
-
-            for(register uintptr_t pdpte = 0; pdpte < 512; ++pdpte) {
-                if(pdpt[pdpte] & PAGE_PRESENT) {
-                    register phys_addr_t* pd = reinterpret_cast<phys_addr_t*>(
-                        pstructMap(pdpt[pdpte]));
-
-                    for(register uintptr_t pde = 0; pde < 512; ++pde) {
-                        if(pd[pde] & PAGE_PRESENT && !(pd[pde] & PAGE_LARGE)) {
-                            freePStructAny(pd[pde]);
-                        }
-                    }
-
-                    pstructUnmap(reinterpret_cast<uintptr_t>(pd));
-                    freePStructAny(pdpt[pdpte]);
+            for(register uintptr_t pde = 0; pde < 512; ++pde) {
+                if(pd[pde] & PAGE_PRESENT && !(pd[pde] & PAGE_LARGE)) {
+                    freePStructAny(pd[pde]);
                 }
             }
 
-            pstructUnmap(reinterpret_cast<uintptr_t>(pdpt));
-            freePStructAny(pml4[pml4e]);
+            pstructUnmap(reinterpret_cast<phys_addr_t>(pd));
+            freePStructAny(pdpt[pdpte]);
         }
     }
-    pstructUnmap(reinterpret_cast<uintptr_t>(pml4));
-    freePStructAny(space);
+
+    pstructUnmap(reinterpret_cast<phys_addr_t>(pdpt));
+    freePStructAny(reinterpret_cast<phys_addr_t>(pdpt));
 }

@@ -16,10 +16,12 @@ PhysicalMemory PhysicalMemory::inst;
 #define ALIGN_DOWN(x, a)  ((x) & ~(a-1))
 #define ALIGN_UP(x, a)    ALIGN_DOWN((x) + a, a)
 
-void PhysicalMemory::setRegion(uintptr_t start, uintptr_t length, bool value) {
-    if(start & (PAGE_SIZE_DEFAULT-1) || (start + length) & (PAGE_SIZE_DEFAULT-1)) {
+void PhysicalMemory::setRegion(phys_addr_t start, phys_addr_t end, bool value) {
+    if(start & (PAGE_SIZE_DEFAULT-1) || end & (PAGE_SIZE_DEFAULT-1)) {
         KFATAL("physical memory region is not page aligned!\n");
     }
+
+    uint64_t length = (end - start);
 
     while(length -= PAGE_SIZE_DEFAULT) {
         spBitmap.set(SCALE_TO_INDEX(start), value);
@@ -27,15 +29,15 @@ void PhysicalMemory::setRegion(uintptr_t start, uintptr_t length, bool value) {
     }
 }
 
-void PhysicalMemory::available(uintptr_t start, uintptr_t length) {
-    setRegion(start, length, false);
+void PhysicalMemory::available(phys_addr_t start, phys_addr_t end) {
+    setRegion(start, end, false);
 }
 
-void PhysicalMemory::reserve(uintptr_t start, uintptr_t length) {
-    setRegion(start, length, true);
+void PhysicalMemory::reserve(phys_addr_t start, phys_addr_t end) {
+    setRegion(start, end, true);
 }
 
-bool PhysicalMemory::tryAllocate(uintptr_t phys, size_t length) {
+bool PhysicalMemory::tryAllocate(phys_addr_t phys, size_t length) {
     register size_t off;
 
     // TODO: lock this!
@@ -58,7 +60,7 @@ bool PhysicalMemory::tryAllocate(uintptr_t phys, size_t length) {
     return true;
 }
 
-uintptr_t PhysicalMemory::allocateAligned(size_t length, size_t align) {
+phys_addr_t PhysicalMemory::allocateAligned(size_t length, size_t align) {
     KASSERTM(align >= PAGE_SIZE_DEFAULT, 
         "alignment must be at least the physical page size");
 
@@ -82,7 +84,7 @@ uintptr_t PhysicalMemory::allocateAligned(size_t length, size_t align) {
     return 0;
 }
 
-uintptr_t PhysicalMemory::allocateFixed(uintptr_t phys, size_t length) {
+phys_addr_t PhysicalMemory::allocateFixed(phys_addr_t phys, size_t length) {
     KASSERTM(phys % PAGE_SIZE_DEFAULT == 0,
         "alignment of physical address must be a multiple of physical page size!");
 
@@ -93,7 +95,7 @@ uintptr_t PhysicalMemory::allocateFixed(uintptr_t phys, size_t length) {
     return 0;
 }
 
-void PhysicalMemory::free(uintptr_t phys, size_t length) {
+void PhysicalMemory::free(phys_addr_t phys, size_t length) {
     register size_t off;
 
     for(off = 0; off < PAGE_COUNT(length); ++off) {

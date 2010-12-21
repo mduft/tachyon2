@@ -23,19 +23,19 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
     Log::instance()->setLevel(Log::Trace);
 
     KINFO("booting tachyon on %s\n", TACHYON_ARCH);
-    KTRACE("multiboot information at %p (magic: 0x%x)\n", mbd, mbm);
+    KTRACE("boot information at %p (magic: 0x%x)\n", mbd, mbm);
 
     if(mbm != MB_MAGIC) {
-        KFATAL("multiboot magic number check failed.\n");
+        KFATAL("boot magic number check failed.\n");
     }
 
     MultiBootInformation mbi(mbd);
 
-    KINFO("mbi: %dkb lower, and %dmb high memory\n", mbi.getLowMemoryKB(), (mbi.getHighMemoryKB() / 1024));
+    KINFO("%dkb lower, and %dmb high memory\n", mbi.getLowMemoryKB(), (mbi.getHighMemoryKB() / 1024));
 
     if(mbi.getMemRangeCount() > 0) {
         char szStr[3] = "kb";
-        KTRACE("mbi: memory map:\n");
+        KTRACE("memory map:\n");
 
         for(uintmax_t i = 0; i < mbi.getMemRangeCount(); ++i) {
             MultiBootInformation::MemoryRange range =
@@ -54,7 +54,7 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
                 (range.isAvailable() ? " avail" : "!avail"));
 
             if(range.isAvailable()) {
-                PhysicalMemory::instance().available(range.getStart(), range.getLength());
+                PhysicalMemory::instance().available(range.getStart(), range.getEnd());
             }
         }
     }
@@ -64,16 +64,12 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
      * the first place, so no need to reserve them now. */
     PhysicalMemory::instance().reserve(0x0, 0x100000);
     PhysicalMemory::instance().reserve(reinterpret_cast<uintptr_t>(&CORE_LMA_START),
-        (reinterpret_cast<uintptr_t>(&_core_lma_ebss) + 0x1000) & ~0xFFF);
-
-    /* test timestamp counter */
-    uint64_t start = ctr.getCurrentTicks();
-    uint64_t min = ctr.getCurrentTicks() - start;
-    KINFO("min-ticks: %d\n", min);
+        (reinterpret_cast<uintptr_t>(&CORE_LMA_START) + 
+            ((reinterpret_cast<uintptr_t>(&_core_lma_ebss) + 0x1000) & ~0xFFF)));
 
     /* test memory */
-    vspace_t* kernelSpace = VirtualMemory::instance().getCurrentVSpace();
-    uintptr_t phys = PhysicalMemory::instance().allocateAligned(0x1000, 0x10000);
+    vspace_t kernelSpace = VirtualMemory::instance().getCurrentVSpace();
+    phys_addr_t phys = PhysicalMemory::instance().allocateAligned(0x1000, 0x10000);
     for(int i = 0; i < 0x10; i++) {
         uintptr_t virt = 0x1000000 + (0x1000 * i);
         if(!VirtualMemory::instance().map(kernelSpace, virt, phys + (0x1000 * i), PAGE_USER | PAGE_WRITABLE)) {
@@ -85,16 +81,16 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
         KINFO("small: %p -> %p\n", virt, phys + (0x1000 * i));
     }
 
-    uintptr_t phys2 = PhysicalMemory::instance().allocateAligned(0x200000, 0x200000);
+    phys_addr_t phys2 = PhysicalMemory::instance().allocateAligned(0x200000, 0x200000);
     uintptr_t virt = 0xF2000000;
-    if(!VirtualMemory::instance().map(kernelSpace, virt, phys2, PAGE_LARGE | PAGE_USER)) {
+    if(!VirtualMemory::instance().map(kernelSpace, virt, phys2, PAGE_LARGE | PAGE_USER | PAGE_WRITABLE)) {
         KFATAL("failed to map %p -> %p\n",  virt, phys2);
     }
 
-    /* should cause a page fault (page write protected even to system)! */
     MemoryHelper::fill(reinterpret_cast<void*>(virt), 0xAA, 0x200000);
 
     KINFO("large: %p -> %p\n", virt, phys2);
+
 
     /* temporary to see more screen output! */
     asm("cli; hlt;");
