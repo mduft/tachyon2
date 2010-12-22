@@ -31,8 +31,8 @@ phys_addr_t* tempMappings = &x86_temp_mapspace;
 
 /**
  * temporarily map a page into the kernels virtual address space.
- * the x86_64_temp_mapspace must be present in the current vspace
- * for the mapping to be accessible
+ * the x86_temp_mapspace must be present in the current vspace
+ * for the mapping to be accessible (it should always be).
  *
  * \param phys  the physical address to map
  * \return      the virtual address that the pysical has been mapped to
@@ -64,6 +64,8 @@ uintptr_t inline pstructMap(register phys_addr_t phys) {
 /**
  * unmaps a previously pstructMap()'d virtual address, freeing it
  * for subsequent pstructMap() calls again.
+ *
+ * \param virt  the virtual address to free.
  */
 void inline pstructUnmap(register uintptr_t virt) {
     for(register uint32_t i = 0; i < TEMPMAP_PAGES; ++i) {
@@ -100,6 +102,11 @@ phys_addr_t inline allocatePStructAny() {
     return addr;
 }
 
+/**
+ * frees a previously allocated paging structure (see allocatePStructAny).
+ *
+ * \param addr  the physical address of the paging-structure to free.
+ */
 void inline freePStructAny(phys_addr_t addr) {
     if(!addr)
         return;
@@ -107,6 +114,23 @@ void inline freePStructAny(phys_addr_t addr) {
     PhysicalMemory::instance().free(addr & ~(PSTRUCT_FLAGS), PSTRUCT_SIZE);
 }
 
+/**
+ * takes a virtual address, and splits it into the seperate components
+ * used for page translation. it then retrieves the corresponding paging
+ * structures, allocating them as needed. those paging structures are
+ * then mapped into the given address space, and returned using the out
+ * parameters.
+ *
+ * \param space     the virtual address space to map into
+ * \param virt      the virtual address to operate on.
+ * \param out pd    will contain the virtual addr. of the mapped pd
+ * \param out pt    will contain the virtual addr. of the mapped pt
+ * \param forcePresent  if this is true, all paging structures have to
+ *                  exist, and are not allocated (a kernel warning is
+ *                  issued, and return is false).
+ * \return          true, if the split was successfull, false if an error
+ *                  occured.
+ */
 bool inline splitVirtualAndMap(vspace_t space, uintptr_t virt, uintptr_t& pd, uintptr_t& pt, bool forcePresent) {
     register uintptr_t pde   = (virt >> 22) & 0x3FF;
     register phys_addr_t* curPs;
@@ -140,17 +164,6 @@ bool inline splitVirtualAndMap(vspace_t space, uintptr_t virt, uintptr_t& pd, ui
 
 } // /namespace {anonymous}
 
-/**
- * maps a virtual region to a physical one. the physical region has
- * to be contigous, and the virtual region will be too.
- *
- * \param space the address space to operate in.
- * \param phys  the start of the physical region to map.
- * \param virt  the target virtual address.
- * \param ps    the size of each page (4K/2M).
- * \param writable  whether the page should be writable.
- * \return      the virtual address, or 0 on error.
- */
 bool VirtualMemory::map(vspace_t space, uintptr_t virt, phys_addr_t phys, uint32_t flags) {
     /* TODO: lock this! */
 
@@ -177,15 +190,6 @@ bool VirtualMemory::map(vspace_t space, uintptr_t virt, phys_addr_t phys, uint32
     return true;
 }
 
-/**
- * unmaps a virtual address, freeing it for subsequent map() calls.
- *
- * \param space the address space to operate on.
- * \param virt  the virtual address to free. page sizes are automatically
- *              detected, and depend on how the virtual region was map()'ed
- * \param pages the number of pages to free. the pagesize is determined from
- *              the first page, and the rest is treated the same size.
- */
 void VirtualMemory::unmap(vspace_t space, uintptr_t virt) {
     /* TODO: lock this! */
 
@@ -210,20 +214,10 @@ void VirtualMemory::unmap(vspace_t space, uintptr_t virt) {
     INVALIDATE(virt);
 }
 
-/**
- * activates the given address space mapping on the current CPU.
- *
- * \param space the address space to activate.
- */
 void VirtualMemory::activateVSpace(vspace_t space) {
     asm("mov %0, %%cr3" :: "r" (space));
 }
 
-/**
- * retrieves the currently active address space for the current CPU.
- *
- * \return      the currently active address space.
- */
 vspace_t VirtualMemory::getCurrentVSpace() {
     uintptr_t p;
 
@@ -232,14 +226,6 @@ vspace_t VirtualMemory::getCurrentVSpace() {
     return static_cast<vspace_t>(p);
 }
 
-/**
- * creates a new (and empty) address space. The kernel is mapped in the high
- * address ranges of the new address space. This wastes some memory (it
- * allocates a full PDPT as with the 64 bit paging for simplicity). It would
- * be possible to save a few KiBs (~3-4) per process here.
- *
- * \return      the virtual address space.
- */
 vspace_t VirtualMemory::newVSpace() {
     phys_addr_t* space = reinterpret_cast<phys_addr_t*>(allocatePStructAny());
 

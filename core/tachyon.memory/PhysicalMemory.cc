@@ -17,8 +17,16 @@ PhysicalMemory PhysicalMemory::inst;
 #define ALIGN_UP(x, a)    ALIGN_DOWN((x) + a, a)
 
 void PhysicalMemory::setRegion(phys_addr_t start, phys_addr_t end, bool value) {
-    if(start & (PAGE_SIZE_DEFAULT-1) || end & (PAGE_SIZE_DEFAULT-1)) {
+    if(start & (PAGE_SIZE_DEFAULT-1)) {
         KFATAL("physical memory region is not page aligned!\n");
+    }
+
+    /* align down the end to the next lower page. we cannot use chunks 
+     * smaller than a page size */
+    if(end & (PAGE_SIZE_DEFAULT-1)) {
+        KWARN("physical memory region ends in the middle of a page. rounding down.\n");
+
+        end = ALIGN_DOWN(end, PAGE_SIZE_DEFAULT);
     }
 
     uint64_t length = (end - start);

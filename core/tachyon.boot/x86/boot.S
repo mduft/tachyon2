@@ -3,7 +3,7 @@
 
 #include <tachyon.platform/x86/asm/x86.h>
 
-.global x86_init
+.global bootstrap_x86
 .global abort
 
 # .------------------------------.
@@ -43,11 +43,11 @@ x86_mbhdr:
     .long CHECKSUM
     .long x86_mbhdr
     .long CORE_LMA_START
-    .long 0
-    .long 0
-    .long x86_init
+    .long _core_lma_edata
+    .long _core_lma_ebss
+    .long bootstrap_x86
 
-x86_init:
+bootstrap_x86:
     # setup the stack
     mov   $x86_core_stack_top, %esp
 

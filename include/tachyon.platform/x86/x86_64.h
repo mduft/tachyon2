@@ -8,13 +8,8 @@
 typedef long long           intptr_t;
 typedef unsigned long long  uintptr_t;
 
-typedef enum {
-    Page4K,
-    Page2M
-} pagesize_t;
-
 #include "x86_common.h"
 
 #define PAGE_SIZE_DEFAULT       PAGE_SIZE_4K
-#define PAGE_SIZE_KERNEL        PAGE_SIZE_2M
+#define PAGE_SIZE_LARGE         PAGE_SIZE_2M
 

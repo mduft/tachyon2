@@ -11,6 +11,8 @@ class VirtualZone {
     uintptr_t start;
     uintptr_t end;
 
+    uintptr_t pageSize;
+
     void init(uintptr_t s, uintptr_t e) { start = s; end = e; }
     void destroy() { start = 0; end = 0; }
 public:
