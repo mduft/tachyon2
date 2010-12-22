@@ -108,7 +108,7 @@ void inline freePStructAny(phys_addr_t addr) {
 }
 
 bool inline splitVirtualAndMap(vspace_t space, uintptr_t virt, uintptr_t& pd, uintptr_t& pt, bool forcePresent) {
-    register uintptr_t pde   = (virt >> 21) & 0x3FF;
+    register uintptr_t pde   = (virt >> 22) & 0x3FF;
     register phys_addr_t* curPs;
     
     pd = pstructMap(space);
@@ -194,7 +194,7 @@ void VirtualMemory::unmap(vspace_t space, uintptr_t virt) {
         KFATAL("failed to split and map virtual address\n");
     }
 
-    register uintptr_t pde   = (virt >> 21) & 0x3FF;
+    register uintptr_t pde   = (virt >> 22) & 0x3FF;
     register uintptr_t pte   = (virt >> 12) & 0x3FF;
     register phys_addr_t* ppd = reinterpret_cast<phys_addr_t*>(pd);
     register phys_addr_t* ppt = reinterpret_cast<phys_addr_t*>(pt);
