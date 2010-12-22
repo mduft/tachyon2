@@ -93,7 +93,6 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
     KINFO("large: %p -> %p\n", virt, phys2);
     #endif
 
-
     /* temporary to see more screen output! */
     asm("cli; hlt;");
 

@@ -93,7 +93,7 @@ clean:
 $(BUILDDIR)/%.o: $(SOURCEDIR)/%.c $(HDR_DEPEND)
 	@-$(MAKE_BDIR)
 	@if test $(VERBOSE) = 0; then \
-		echo "[CC  ] $(notdir $<)"; \
+		echo "[CC  ] $(subst $(SOURCEDIR)/,,$<)"; \
 	 else \
 	 	echo "$(CC) $(KCFLAGS) -c -o \"$@\" \"$<\""; \
 	 fi
@@ -102,7 +102,7 @@ $(BUILDDIR)/%.o: $(SOURCEDIR)/%.c $(HDR_DEPEND)
 $(BUILDDIR)/%.o: $(SOURCEDIR)/%.cc $(HDR_DEPEND)
 	@-$(MAKE_BDIR)
 	@if test $(VERBOSE) = 0; then \
-		echo "[CXX ] $(notdir $<)"; \
+		echo "[CXX ] $(subst $(SOURCEDIR)/,,$<)"; \
 	 else \
 	 	echo "$(CXX) $(KCXXFLAGS) -c -o \"$@\" \"$<\""; \
 	 fi
@@ -111,7 +111,7 @@ $(BUILDDIR)/%.o: $(SOURCEDIR)/%.cc $(HDR_DEPEND)
 $(BUILDDIR)/%.o: $(SOURCEDIR)/%.S $(HDR_DEPEND)
 	@-$(MAKE_BDIR)
 	@if test $(VERBOSE) = 0; then \
-		echo "[AS  ] $(notdir $<)"; \
+		echo "[AS  ] $(subst $(SOURCEDIR)/,,$<)"; \
 	 else \
 	 	echo "$(CC) $(KCFLAGS) -D__ASM__ -c -o \"$@\" \"$<\""; \
 	 fi

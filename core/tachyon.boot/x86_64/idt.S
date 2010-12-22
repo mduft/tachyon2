@@ -30,7 +30,7 @@ x86_64_idt_ptr:
 x86_64_isr_trampoline:
     mov %rsp, %rdi
     callq interrupt_l0
-    iret
+    ret
 
 .macro x86_64_isr num, has_err, res=0
 _x86_64_isr\num:
@@ -41,7 +41,13 @@ _x86_64_isr\num:
     call abort
     .else
     push $\num
-    jmp x86_64_isr_trampoline
+    call x86_64_isr_trampoline
+    .if !\has_err
+    addq $0x10, %rsp
+    .else
+    addq $0x8, %rsp
+    .endif
+    iret
     .endif
 .endm
 

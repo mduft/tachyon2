@@ -6,8 +6,8 @@
 
 VirtualZoneManager VirtualZoneManager::inst;
 
-vzone_t* VirtualZoneManager::allocate(uintptr_t start, uintptr_t end) {
-    vzone_t* freeZone = 0;
+VirtualZone* VirtualZoneManager::define(uintptr_t start, uintptr_t end) {
+    VirtualZone* freeZone = 0;
     for(register uintptr_t i = 0; i < MAX_VZONES; ++i) {
         if(zones[i].start == 0 && zones[i].end == 0) {
             freeZone = &zones[i];
@@ -24,13 +24,11 @@ vzone_t* VirtualZoneManager::allocate(uintptr_t start, uintptr_t end) {
     if(!freeZone)
         return 0;
 
-    freeZone->start = start;
-    freeZone->end = end;
+    freeZone->init(start, end);
 
     return freeZone;
 }
 
-void free(vzone_t* zone) {
-    zone->start = 0;
-    zone->end = 0;
+void VirtualZoneManager::remove(VirtualZone* zone) {
+    zone->destroy();
 }

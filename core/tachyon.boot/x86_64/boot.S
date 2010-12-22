@@ -101,7 +101,6 @@ bootstrap_x86_64_x64:
     call __init_cxx
 
     call x86_64_idt_init
-    # TODO: 64 bit TSS, 64bit ISTs and then activate this.
     lidt (x86_64_idt_ptr)
 
     # restore the multiboot-loader information to the correct register

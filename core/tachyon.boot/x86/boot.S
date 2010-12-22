@@ -107,6 +107,10 @@ x86_init:
     call __init_bss
     call __kcon_reset
     call __init_cxx
+
+    call x86_idt_init
+    lidt (x86_idt_ptr)
+
     call boot
 
     call __cleanup_cxx

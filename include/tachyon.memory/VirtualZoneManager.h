@@ -4,21 +4,17 @@
 #pragma once
 
 #include <tachyon.platform/architecture.h>
+#include "VirtualZone.h"
 
 #define MAX_VZONES 32
-
-typedef struct {
-    uintptr_t start;
-    uintptr_t end;
-} vzone_t;
 
 class VirtualZoneManager {
     static VirtualZoneManager inst;
 
-    vzone_t zones[MAX_VZONES];
+    VirtualZone zones[MAX_VZONES];
 public:
     static VirtualZoneManager& instance() { return inst; }
 
-    vzone_t* allocate(uintptr_t start, uintptr_t end);
-    void free(vzone_t* zone);
+    VirtualZone* define(uintptr_t start, uintptr_t end);
+    void remove(VirtualZone* zone);
 };
