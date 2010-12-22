@@ -27,11 +27,6 @@ x86_idt_ptr:
 
 .section .text
 
-x86_isr_trampoline:
-    push %esp
-    call interrupt_l0
-    ret
-
 .macro x86_isr num, has_err, res=0
 _x86_isr\num:
     .if !\has_err
@@ -41,7 +36,8 @@ _x86_isr\num:
     call abort
     .else
     push $\num
-    call x86_isr_trampoline
+    push %esp
+    call interrupt_l0
     .if !\has_err
     add $0x8, %esp
     .else
@@ -243,7 +239,7 @@ x86_idt_set:
 
     mov %esi, %ebx
     and $0xFFFF, %ebx
-    or $(0x18 << 0x10), %ebx        # the segment selector in the gdt!
+    or $(0x8 << 0x10), %ebx        # the segment selector in the gdt!
 
     mov %ebx, (%eax)
     mov %esi, %ebx
