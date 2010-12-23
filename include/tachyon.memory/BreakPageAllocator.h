@@ -34,5 +34,7 @@ public:
     uintptr_t decrease(size_t pages);
 
     uintptr_t getBase() { return zone->getStart(); }
-    uintptr_t getBreak() { return brk; }
+    uintptr_t getTop() { return brk; }
+
+    size_t getPageSize() { return ps; }
 };

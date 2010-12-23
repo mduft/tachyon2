@@ -141,7 +141,7 @@ void inline freePStructAny(phys_addr_t addr) {
  *                  occured.
  */
 bool inline splitVirtualAndMap(vspace_t space, uintptr_t virt, uintptr_t& pml4, uintptr_t& pdpt, uintptr_t& pd, uintptr_t& pt, bool large, bool forcePresent) {
-    register uintptr_t pml4e = (virt >> 39);
+    register uintptr_t pml4e = (virt >> 39) & 0x1FF; // still need to mask, since not the whole 64 bit's are supported.
     register uintptr_t pdpte = (virt >> 30) & 0x1FF;
     register uintptr_t pde   = (virt >> 21) & 0x1FF;
     register phys_addr_t* curPs;

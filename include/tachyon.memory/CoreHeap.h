@@ -13,6 +13,7 @@ class CoreHeap {
 
     CoreHeap(BreakPageAllocator& allocator)
         :   alloc(allocator) {}
+    void init();
 public:
     static CoreHeap& instance() { return inst; }
 
