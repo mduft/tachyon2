@@ -10,12 +10,14 @@ class VirtualZone {
 
     uintptr_t start;
     uintptr_t end;
-
-    uintptr_t pageSize;
+    bool use;
 
     void init(uintptr_t s, uintptr_t e) { start = s; end = e; }
     void destroy() { start = 0; end = 0; }
 public:
     uintptr_t getStart() { return start; }
     uintptr_t getEnd() { return end; }
+
+    bool used() { return use; }
+    void used(bool u) { use = u; }
 };

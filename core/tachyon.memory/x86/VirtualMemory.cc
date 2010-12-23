@@ -198,20 +198,29 @@ void VirtualMemory::unmap(vspace_t space, uintptr_t virt) {
         KFATAL("failed to split and map virtual address\n");
     }
 
-    register uintptr_t pde   = (virt >> 22) & 0x3FF;
     register uintptr_t pte   = (virt >> 12) & 0x3FF;
-    register phys_addr_t* ppd = reinterpret_cast<phys_addr_t*>(pd);
     register phys_addr_t* ppt = reinterpret_cast<phys_addr_t*>(pt);
-
-    if(!(ppd[pde] & PAGE_PRESENT)) {
-        KWARN("pd not present for virtual address %p\n", virt);
-        return;
-    }
 
     ppt[pte] = 0;
     pstructUnmap(pt);
     pstructUnmap(pd);
     INVALIDATE(virt);
+}
+
+phys_addr_t VirtualMemory::getMappedAddr(vspace_t space, uintptr_t virt) {
+    uintptr_t pd, pt;
+
+    if(!splitVirtualAndMap(space, virt, pd, pt, true))
+        return 0;
+
+    register uintptr_t pte   = (virt >> 12) & 0x3FF;
+    register phys_addr_t* ppt = reinterpret_cast<phys_addr_t*>(pt);
+    register phys_addr_t mapped = ppt[pte] & ~PSTRUCT_FLAGS;
+
+    pstructUnmap(pt);
+    pstructUnmap(pd);
+
+    return mapped;
 }
 
 void VirtualMemory::activateVSpace(vspace_t space) {

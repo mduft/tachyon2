@@ -156,7 +156,6 @@ bool inline splitVirtualAndMap(vspace_t space, uintptr_t virt, uintptr_t& pml4, 
 
     if(!(curPs[pml4e] & PAGE_PRESENT)) {
         if(forcePresent) {
-            KWARN("virtual address expected to be present was not (%p)\n", virt);
             return false;
         }
         curPs[pml4e] = allocatePStructAny() | PAGE_PRESENT | PAGE_WRITABLE;
@@ -172,7 +171,6 @@ bool inline splitVirtualAndMap(vspace_t space, uintptr_t virt, uintptr_t& pml4, 
 
     if(!(curPs[pdpte] & PAGE_PRESENT)) {
         if(forcePresent) {
-            KWARN("virtual address expected to be present was not (%p)\n", virt);
             return false;
         }
         curPs[pdpte] = allocatePStructAny() | PAGE_PRESENT | PAGE_WRITABLE;
@@ -195,7 +193,6 @@ bool inline splitVirtualAndMap(vspace_t space, uintptr_t virt, uintptr_t& pml4, 
     if(!large) {
         if(!(curPs[pde] & PAGE_PRESENT)) {
             if(forcePresent) {
-                KWARN("virtual address expected to be present was not (%p)\n", virt);
                 return false;
             }
             curPs[pde] = allocatePStructAny() | PAGE_PRESENT | PAGE_WRITABLE;
@@ -272,11 +269,6 @@ void VirtualMemory::unmap(vspace_t space, uintptr_t virt) {
     register phys_addr_t* ppd = reinterpret_cast<phys_addr_t*>(pd);
     register phys_addr_t* ppt = reinterpret_cast<phys_addr_t*>(pt);
 
-    if(!(ppd[pde] & PAGE_PRESENT)) {
-        KWARN("pd not present for virtual address %p\n", virt);
-        return;
-    }
-
     if(ppd[pde] & PAGE_LARGE) {
         register uintptr_t pte   = (virt >> 12) & 0x1FF;
 
@@ -295,6 +287,32 @@ void VirtualMemory::unmap(vspace_t space, uintptr_t virt) {
     pstructUnmap(pdpt);
     pstructUnmap(pml4);
     INVALIDATE(virt);
+}
+
+phys_addr_t VirtualMemory::getMappedAddr(vspace_t space, uintptr_t virt) {
+    uintptr_t pml4, pdpt, pd, pt;
+
+    if(!splitVirtualAndMap(space, virt, pml4, pdpt, pd, pt, false, true))
+        return 0;
+
+    register uintptr_t pde   = (virt >> 21) & 0x1FF;
+    register phys_addr_t* ppd = reinterpret_cast<phys_addr_t*>(pd);
+    register phys_addr_t* ppt = reinterpret_cast<phys_addr_t*>(pt);
+    register phys_addr_t mapped = 0;
+
+    if(ppd[pde] & PAGE_LARGE) {
+        mapped = ppd[pde] & ~PSTRUCT_FLAGS;
+    } else {
+        register uintptr_t pte   = (virt >> 12) & 0x1FF;
+        mapped =  ppt[pte] & ~PSTRUCT_FLAGS;
+        pstructUnmap(pt);
+    }
+
+    pstructUnmap(pd);
+    pstructUnmap(pdpt);
+    pstructUnmap(pml4);
+
+    return mapped;
 }
 
 void VirtualMemory::activateVSpace(vspace_t space) {

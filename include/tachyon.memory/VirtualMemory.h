@@ -37,6 +37,15 @@ public:
     void unmap(vspace_t space, uintptr_t virt);
 
     /**
+     * returns the physical address, that the virtual address is mapped to.
+     *
+     * \param space the virtual address space to operate on.
+     * \param virt  the virtual address to resolve.
+     * \return      the mapped physical address, or 0 if not mapped.
+     */
+    phys_addr_t getMappedAddr(vspace_t space, uintptr_t virt);
+
+    /**
      * activates the given address space mapping on the current CPU.
      *
      * \param space the address space to activate.

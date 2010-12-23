@@ -59,7 +59,6 @@ bool PhysicalMemory::tryAllocate(phys_addr_t phys, size_t length) {
     }
 
     for(off = 0; off < PAGE_COUNT(length); ++off) {
-        KTRACE("handing out page @ %p\n", SCALE_TO_PHYS(SCALE_TO_INDEX(phys) + off));
         spBitmap.set(SCALE_TO_INDEX(phys) + off, true);
     }
 

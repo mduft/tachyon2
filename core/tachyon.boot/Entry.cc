@@ -78,7 +78,7 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
 
         MemoryHelper::fill(reinterpret_cast<void*>(virt), i, 0x1000);
 
-        KINFO("small: %p -> %p\n", virt, phys + (0x1000 * i));
+        KINFO("small: %p -> %p (%p)\n", virt, phys + (0x1000 * i), VirtualMemory::instance().getMappedAddr(kernelSpace, virt));
     }
 
     #ifdef __X86_64__
@@ -90,7 +90,7 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
 
     MemoryHelper::fill(reinterpret_cast<void*>(virt), 0xAA, 0x200000);
 
-    KINFO("large: %p -> %p\n", virt, phys2);
+    KINFO("large: %p -> %p (%p)\n", virt, phys2, VirtualMemory::instance().getMappedAddr(kernelSpace, virt));
     #endif
 
     /* temporary to see more screen output! */
