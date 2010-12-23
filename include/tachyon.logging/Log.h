@@ -15,12 +15,12 @@
 #define KLOG(lvl, fmt, ...) \
     if(Log::instance()->getLevel() <= lvl) { Log::instance()->write("%s:%4d: " fmt, reinterpret_cast<uint8_t const*>(MemoryHelper::rfind(__FILE__, '/', sizeof(__FILE__))) + 1,  __LINE__, __VA_ARGS__); }
 
-#define KTRACE(...) KLOG(Log::Trace,     __VA_ARGS__, 0); 
-#define KINFO(...)  KLOG(Log::Info,      __VA_ARGS__, 0);
-#define KWARN(...)  KLOG(Log::Warning,   __VA_ARGS__, 0);
-#define KERROR(...) KLOG(Log::Error,     __VA_ARGS__, 0);
-#define KFATAL(...) KLOG(Log::Fatal,     __VA_ARGS__, 0); abort();
-#define KWRITE(...) Log::instance()->write(__VA_ARGS__);
+#define KTRACE(...) { KLOG(Log::Trace,     __VA_ARGS__, 0); }
+#define KINFO(...)  { KLOG(Log::Info,      __VA_ARGS__, 0); }
+#define KWARN(...)  { KLOG(Log::Warning,   __VA_ARGS__, 0); }
+#define KERROR(...) { KLOG(Log::Error,     __VA_ARGS__, 0); }
+#define KFATAL(...) { KLOG(Log::Fatal,     __VA_ARGS__, 0); abort(); }
+#define KWRITE(...) { Log::instance()->write(__VA_ARGS__); }
 
 /* TODO: maybe find a better place for this...? */
 #define KASSERT(x)      if(!(x)) { KFATAL("assertion fail: %s\n", #x); }

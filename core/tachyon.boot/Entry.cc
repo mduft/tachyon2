@@ -10,6 +10,7 @@
 #include <tachyon.memory/MemoryHelper.h>
 #include <tachyon.memory/PhysicalMemory.h>
 #include <tachyon.memory/VirtualMemory.h>
+#include <tachyon.memory/CoreHeap.h>
 
 extern "C" uintptr_t CORE_LMA_START;
 extern "C" uintptr_t _core_lma_ebss;
@@ -24,6 +25,10 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
 
     KINFO("booting tachyon on %s\n", TACHYON_ARCH);
     KTRACE("boot information at %p (magic: 0x%x)\n", mbd, mbm);
+
+    /* basic check .. */
+    if(reinterpret_cast<uintptr_t>(&_core_lma_ebss) > CORE_HEAP_START)
+        KFATAL("bss crosses kernel heap!\n");
 
     if(mbm != MB_MAGIC) {
         KFATAL("boot magic number check failed.\n");
@@ -68,6 +73,7 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
             ((reinterpret_cast<uintptr_t>(&_core_lma_ebss) + 0x1000) & ~0xFFF)));
 
     /* test memory */
+#if 0
     vspace_t kernelSpace = VirtualMemory::instance().getCurrentVSpace();
     phys_addr_t phys = PhysicalMemory::instance().allocateAligned(0x1000, 0x10000);
     for(int i = 0; i < 0x10; i++) {
@@ -92,6 +98,11 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
 
     KINFO("large: %p -> %p (%p)\n", virt, phys2, VirtualMemory::instance().getMappedAddr(kernelSpace, virt));
     #endif
+#endif
+
+    /* core heap tests */
+    char* ptr = CoreHeap::instance().allocate<char>(10);
+    KINFO("char[10] @ %p\n", ptr);
 
     /* temporary to see more screen output! */
     asm("cli; hlt;");

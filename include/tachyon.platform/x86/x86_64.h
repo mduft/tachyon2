@@ -8,6 +8,7 @@
 typedef long long           intptr_t;
 typedef unsigned long long  uintptr_t;
 
+#include "asm/x86_64.h"
 #include "x86_common.h"
 
 #define PAGE_SIZE_DEFAULT       PAGE_SIZE_4K
