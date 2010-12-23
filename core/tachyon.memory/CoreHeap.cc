@@ -87,5 +87,54 @@ void* CoreHeap::allocate(size_t bytes) {
 }
 
 void CoreHeap::free(void* mem) {
-    /* TODO: free present block, and merge adjacent free blocks */
+    if(!mem)
+        return;
+
+    cheap_blockinfo_t* ptr = reinterpret_cast<cheap_blockinfo_t*>(
+        reinterpret_cast<uintptr_t>(mem) - sizeof(cheap_blockinfo_t));
+
+    if(reinterpret_cast<uintptr_t>(ptr) & (CHEAP_BLOCK_ALIGN-1))
+    {
+        KWARN("request to free unaligned memory, ignoring\n");
+        return;
+    }
+
+    if(!(*ptr & BLOCK_PRESENT)) {
+        KWARN("no present block at given address found, double free()?\n");
+        return;
+    }
+
+    register size_t block_sz = CHEAP_CLEAR_FLAGS(*ptr);
+    register cheap_blockinfo_t* footer = CHEAP_FOOTER(ptr);
+
+    register cheap_blockinfo_t* prev_footer = reinterpret_cast<cheap_blockinfo_t*>(
+        reinterpret_cast<uintptr_t>(ptr) - sizeof(cheap_blockinfo_t));
+
+    if(reinterpret_cast<uintptr_t>(prev_footer) > alloc.getBase() && !(*prev_footer & BLOCK_PRESENT)) {
+        /* previous block is free, merge */
+        register cheap_blockinfo_t* prev_hdr = CHEAP_HEADER(prev_footer);
+
+        if(reinterpret_cast<uintptr_t>(prev_hdr) < alloc.getBase()) {
+            KWARN("corrupt block footer, pointing to out-of-bounds header!\n");
+            return;
+        }
+
+        CHEAP_BLOCK_UPDATE(prev_hdr, CHEAP_CLEAR_FLAGS(*prev_hdr) + block_sz, 0);
+
+        if(CHEAP_FOOTER(prev_hdr) != footer) {
+            KWARN("end of merged free block differs from original end of block!\n");
+        }
+
+        ptr = prev_hdr;
+    } else {
+        /* leave block as is, but update flags to not present */
+        CHEAP_BLOCK_UPDATE(ptr, block_sz, 0);
+    }
+
+    register cheap_blockinfo_t* next_hdr = CHEAP_NEXT_BLOCK(ptr);
+
+    if(reinterpret_cast<uintptr_t>(next_hdr) <= alloc.getTop() && !(*next_hdr & BLOCK_PRESENT)) {
+        /* next block is free, so merge. */
+        CHEAP_BLOCK_UPDATE(ptr, CHEAP_CLEAR_FLAGS(*ptr) + CHEAP_CLEAR_FLAGS(*next_hdr), 0);
+    }
 }

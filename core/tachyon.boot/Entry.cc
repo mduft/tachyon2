@@ -110,6 +110,10 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
     char* x = CoreHeap::instance().allocate<char>(0x200000);
     KINFO("char[0x200000] @ %p\n", x);
 
+    CoreHeap::instance().free(ptr);
+    CoreHeap::instance().free(x);
+    CoreHeap::instance().free(n);
+
     /* temporary to see more screen output! */
     asm("cli; hlt;");
 
