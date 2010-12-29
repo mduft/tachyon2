@@ -102,13 +102,13 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
 
     /* core heap tests */
     char* ptr = CoreHeap::instance().allocate<char>(10);
-    KINFO("char[10] @ %p\n", ptr);
+    KINFO("char[0x0a] @ %p\n", ptr);
 
     char* n = CoreHeap::instance().allocate<char>(0x20);
     KINFO("char[0x20] @ %p\n", n);
 
-    char* x = CoreHeap::instance().allocate<char>(0x200000);
-    KINFO("char[0x200000] @ %p\n", x);
+    char* x = CoreHeap::instance().allocate<char>(0x10);
+    KINFO("char[0x10] @ %p\n", x);
 
     CoreHeap::instance().free(ptr);
     CoreHeap::instance().free(x);
