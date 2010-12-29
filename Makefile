@@ -5,6 +5,8 @@
 ARCH			:= x86_64
 VERBOSE			:= 0
 
+SHELL			:= bash
+
 SOURCEDIR		:= $(abspath $(dir $(firstword $(MAKEFILE_LIST))))
 BUILDDIR		:= $(SOURCEDIR)/.build/$(ARCH)
 
