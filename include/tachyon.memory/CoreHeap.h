@@ -24,3 +24,4 @@ public:
 
     void free(void* mem);
 };
+

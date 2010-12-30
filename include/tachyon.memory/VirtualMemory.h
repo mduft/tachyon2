@@ -75,3 +75,4 @@ public:
      */
     void deleteVSpace(vspace_t space);
 };
+

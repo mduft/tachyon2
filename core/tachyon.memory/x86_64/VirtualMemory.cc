@@ -251,7 +251,7 @@ bool VirtualMemory::map(vspace_t space, uintptr_t virt, phys_addr_t phys, uint32
     pstructUnmap(pdpt);
     pstructUnmap(pml4);
 
-    KTRACE("virtual-mapped %p -> %p (flags: 0x%x)\n", virt, phys, flags | PAGE_PRESENT);
+    KTRACE("map %p -> %p (f: 0x%x)\n", virt, phys, flags | PAGE_PRESENT);
 
     INVALIDATE(virt);
     return true;

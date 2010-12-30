@@ -2,6 +2,7 @@
  * This file is part of the 'tachyon' operating system. */
 
 #include <tachyon.boot/MultiBoot.h>
+#include <tachyon.logging/Log.h>
 
 MultiBootInformation::MultiBootInformation(void* mbi)
         :   info(reinterpret_cast<mb_info*>(mbi)),
@@ -10,6 +11,22 @@ MultiBootInformation::MultiBootInformation(void* mbi)
     if(info->flags & MB_INFO_MEMMAP) {
         mmap_count = MemoryRange::countEntries(info->mmap_addr, info->mmap_length);
     }
+
+    KTRACE("multiboot information @ %p\n", mbi);
+    KTRACE("    (%s %s %s %s %s %s %s %s %s %s %s %s)\n",
+            info->flags & MB_INFO_MEMORY     ? "MEM" : "mem",
+            info->flags & MB_INFO_DEVICE     ? "DEV" : "dev",
+            info->flags & MB_INFO_CMDLINE    ? "CMD" : "cmd",
+            info->flags & MB_INFO_MODS       ? "MOD" : "mod",
+            info->flags & MB_INFO_AOUT_SYMS  ? "ASY" : "asy",
+            info->flags & MB_INFO_ELF_SYMS   ? "ESY" : "esy",
+            info->flags & MB_INFO_MEMMAP     ? "MMP" : "mmp",
+            info->flags & MB_INFO_DRIVES     ? "DRV" : "drv",
+            info->flags & MB_INFO_CONFIG_TBL ? "CTB" : "ctb",
+            info->flags & MB_INFO_LOADER_NAM ? "LDR" : "ldr",
+            info->flags & MB_INFO_APM_TABLE  ? "APM" : "apm",
+            info->flags & MB_INFO_VIDEO      ? "VID" : "vid"
+        );
 }
 
 MultiBootInformation::MemoryRange::MemoryRange(uint32_t mmap_base, uint32_t mmap_num)

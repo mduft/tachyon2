@@ -24,7 +24,6 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
     Log::instance().setLevel(Log::Trace);
 
     KINFO("booting tachyon on %s\n", TACHYON_ARCH);
-    KTRACE("boot information at %p (magic: 0x%x)\n", mbd, mbm);
 
     /* basic check .. */
     if(reinterpret_cast<uintptr_t>(&_core_lma_ebss) > CORE_HEAP_START)
@@ -72,39 +71,11 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
         (reinterpret_cast<uintptr_t>(&CORE_LMA_START) + 
             ((reinterpret_cast<uintptr_t>(&_core_lma_ebss) + 0x1000) & ~0xFFF)));
 
-    /* test memory */
-#if 0
-    vspace_t kernelSpace = VirtualMemory::instance().getCurrentVSpace();
-    phys_addr_t phys = PhysicalMemory::instance().allocateAligned(0x1000, 0x10000);
-    for(int i = 0; i < 0x10; i++) {
-        uintptr_t virt = 0x1000000 + (0x1000 * i);
-        if(!VirtualMemory::instance().map(kernelSpace, virt, phys + (0x1000 * i), PAGE_USER | PAGE_WRITABLE)) {
-            KFATAL("failed to map %p -> %p\n", virt, phys);
-        }
-
-        MemoryHelper::fill(reinterpret_cast<void*>(virt), i, 0x1000);
-
-        KINFO("small: %p -> %p (%p)\n", virt, phys + (0x1000 * i), VirtualMemory::instance().getMappedAddr(kernelSpace, virt));
-    }
-
-    #ifdef __X86_64__
-    phys_addr_t phys2 = PhysicalMemory::instance().allocateAligned(0x200000, 0x200000);
-    uintptr_t virt = 0xF2000000;
-    if(!VirtualMemory::instance().map(kernelSpace, virt, phys2, PAGE_LARGE | PAGE_USER | PAGE_WRITABLE)) {
-        KFATAL("failed to map %p -> %p\n",  virt, phys2);
-    }
-
-    MemoryHelper::fill(reinterpret_cast<void*>(virt), 0xAA, 0x200000);
-
-    KINFO("large: %p -> %p (%p)\n", virt, phys2, VirtualMemory::instance().getMappedAddr(kernelSpace, virt));
-    #endif
-#endif
-
     /* core heap tests */
     char* ptr = CoreHeap::instance().allocate<char>(10);
     KINFO("char[0x0a] @ %p\n", ptr);
 
-    char* n = CoreHeap::instance().allocate<char>(0x20);
+    char* n = new char[0x20];
     KINFO("char[0x20] @ %p\n", n);
 
     char* x = CoreHeap::instance().allocate<char>(0x10);
