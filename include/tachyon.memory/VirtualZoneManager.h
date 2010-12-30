@@ -9,11 +9,12 @@
 #define MAX_VZONES 32
 
 class VirtualZoneManager {
-    static VirtualZoneManager inst;
-
     VirtualZone zones[MAX_VZONES];
 public:
-    static VirtualZoneManager& instance() { return inst; }
+    static VirtualZoneManager& instance() {
+        static VirtualZoneManager inst;
+        return inst; 
+    }
 
     VirtualZone* define(uintptr_t start, uintptr_t end);
     void remove(VirtualZone* zone);

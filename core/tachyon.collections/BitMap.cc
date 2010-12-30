@@ -2,21 +2,32 @@
  * This file is part of the 'tachyon' operating system. */
 
 #include <tachyon.collections/BitMap.h>
+#include <tachyon.logging/Log.h>
+
+#define ITEM_BITS (sizeof(memory[0])*8)
 
 #define SET_BIT(num, val) \
-    { if(val) { memory[num/sizeof(memory[0])] |= (1 << (num%sizeof(memory[0]))); } \
-      else    { memory[num/sizeof(memory[0])] &= ~(1<< (num%sizeof(memory[0]))); } }
+    { if(val) { memory[num/ITEM_BITS] |= (1 << (num%ITEM_BITS)); } \
+      else    { memory[num/ITEM_BITS] &= ~(1<< (num%ITEM_BITS)); } }
 
 #define GET_BIT(num, out) \
-    { out = memory[num/sizeof(memory[0])] & (1 << (num%sizeof(memory[0]))); }
+    { out = memory[num/ITEM_BITS] & (1 << (num%ITEM_BITS)); }
+
+#define CHECK_INDEX(i) \
+    if((i / ITEM_BITS) >= byteCount) { \
+        KFATAL("index out of range: %d (item-size: %d bits)!\n", i, ITEM_BITS); }
 
 bool BitMap::get(size_t index) {
     bool bit;
+
+    CHECK_INDEX(index);
+
     GET_BIT(index, bit);
     return bit;
 }
 
 void BitMap::set(size_t index, bool value) {
+    CHECK_INDEX(index);
     SET_BIT(index, value);
 }
 

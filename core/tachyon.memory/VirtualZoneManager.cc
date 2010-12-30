@@ -4,8 +4,6 @@
 #include <tachyon.memory/VirtualZoneManager.h>
 #include <tachyon.logging/Log.h>
 
-VirtualZoneManager VirtualZoneManager::inst;
-
 VirtualZone* VirtualZoneManager::define(uintptr_t start, uintptr_t end) {
     VirtualZone* freeZone = 0;
     for(register uintptr_t i = 0; i < MAX_VZONES; ++i) {
