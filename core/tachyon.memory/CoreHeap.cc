@@ -18,9 +18,9 @@ typedef uintptr_t cheap_blockinfo_t;
 #define CHEAP_ALIGN_UP(x)   CHEAP_ALIGN_DN((x) + (CHEAP_BLOCK_ALIGN-1))
 #define CHEAP_CLEAR_FLAGS(x) CHEAP_ALIGN_DN(x)
 #define CHEAP_FOOTER(h)     reinterpret_cast<cheap_blockinfo_t*>(   \
-                reinterpret_cast<uintptr_t>(h) + sizeof(cheap_blockinfo_t) + CHEAP_CLEAR_FLAGS(*h))
+                (reinterpret_cast<uintptr_t>(h) + sizeof(cheap_blockinfo_t)) + (CHEAP_CLEAR_FLAGS(*h)))
 #define CHEAP_HEADER(f)     reinterpret_cast<cheap_blockinfo_t*>(   \
-                (reinterpret_cast<uintptr_t>(f) - sizeof(cheap_blockinfo_t)) + (CHEAP_CLEAR_FLAGS(*f)))
+                (reinterpret_cast<uintptr_t>(f) - sizeof(cheap_blockinfo_t)) - (CHEAP_CLEAR_FLAGS(*f)))
 
 /* the block info is there twice, once at the start, and once at the end... */
 #define CHEAP_BLOCKSZ(x)    ((x) + (sizeof(cheap_blockinfo_t) * 2))
@@ -36,7 +36,7 @@ typedef uintptr_t cheap_blockinfo_t;
     alloc.getTop()) ? false : true)
 
 #define CHEAP_BLOCK_UPDATE(p, sz, f) \
-    {   *p = ((sz) | (f)); *CHEAP_FOOTER(p) = ((sz) | (f) | BLOCK_FOOTER); }
+    {   size_t nsz = (sz); *p = ((nsz) | (f)); *CHEAP_FOOTER(p) = ((nsz) | (f) | BLOCK_FOOTER); }
     
 
 #define BLOCK_PRESENT   (1 << 0)
