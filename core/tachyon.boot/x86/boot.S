@@ -42,10 +42,6 @@ x86_mbhdr:
     .long FLAGS
     .long CHECKSUM
     .long x86_mbhdr
-    .long CORE_LMA_START
-    .long _core_lma_edata
-    .long _core_lma_ebss
-    .long bootstrap_x86
 
 bootstrap_x86:
     # setup the stack

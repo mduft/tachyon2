@@ -4,6 +4,8 @@
 #include <tachyon.platform/architecture.h>
 #include <tachyon.logging/Log.h>
 
+#include <tachyon.binary/elf/shdr.h>
+
 extern "C" void __dump_cpustate(cpustate_t* s, xcpustate_t* xs) {
     /* state is the state of either a 32 or 64 bit mode cpu.
      * xstate is the extended state of a 64 bit mode cpu or null */
@@ -36,12 +38,33 @@ struct syminfo {
     uintptr_t addr;
 };
 
+static Elf_Shdr* _strtab;
+static Elf_Shdr* _symtab;
+
+extern "C" void __dump_set_symtab(uint32_t num, uint32_t size, uint32_t addr, uint32_t shndx) {
+    KTRACE("num: %d, size: %d, addr: %p, shndx: %d\n", num, size, addr, shndx);
+
+    _strtab=0;
+    _symtab=0;
+
+    if(size != sizeof(Elf_Shdr)) {
+        KWARN("size of section headers unexpected!\n");
+        return;
+    }
+
+    /* TODO: find symtab and strtab for it... */
+}
+
 static struct syminfo getSymbolInfo(uintptr_t ip) {
     static char const* defName = "<unknown>";
 
     struct syminfo info;
     info.name = defName;
     info.addr = ip;
+
+    if(_symtab && _strtab) {
+        /* TODO: implement as soon as the above __dump_set_symtab is implemented. */
+    }
 
     return info;
 }
@@ -89,5 +112,4 @@ extern "C" void __dump_stack() {
         bp = reinterpret_cast<intptr_t*>(bp[0]);
     }
 }
-
 

@@ -30,7 +30,10 @@ class MultiBootInformation {
         uint32_t    cmdline;
         uint32_t    mods_count;
         uint32_t    mods_addr;
-        uint32_t    syms[4];
+        uint32_t    esym_shdr_num;
+        uint32_t    esym_shdr_size;
+        uint32_t    esym_shdr_addr;
+        uint32_t    esym_shdr_shndx;
         uint32_t    mmap_length;
         uint32_t    mmap_addr;
         uint32_t    drives_length;

@@ -13,9 +13,10 @@
 SECTION_BOOT_TEXT
 .code32
 
-.set MEMINFO,       1<<1
-.set KLUDGE,        1<<16
-.set FLAGS,         MEMINFO | KLUDGE
+.set ALIGN,         1<<0             # align loaded modules on page boundaries
+.set MEMINFO,       1<<1             # provide memory map
+.set KLUDGE,        1<<16            # use a.out kludge (allows loading of section headers, etc.)
+.set FLAGS,         MEMINFO | KLUDGE | ALIGN
 .set MAGIC,         0x1BADB002
 .set CHECKSUM,      -(MAGIC + FLAGS)
 

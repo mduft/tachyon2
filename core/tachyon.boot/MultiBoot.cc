@@ -4,6 +4,8 @@
 #include <tachyon.boot/MultiBoot.h>
 #include <tachyon.logging/Log.h>
 
+extern "C" void __dump_set_symtab(uint32_t num, uint32_t size, uint32_t addr, uint32_t shndx);
+
 MultiBootInformation::MultiBootInformation(void* mbi)
         :   info(reinterpret_cast<mb_info*>(mbi)),
             mmap_count(0) {
@@ -27,6 +29,11 @@ MultiBootInformation::MultiBootInformation(void* mbi)
             info->flags & MB_INFO_APM_TABLE  ? "APM" : "apm",
             info->flags & MB_INFO_VIDEO      ? "VID" : "vid"
         );
+
+    if(info->flags & MB_INFO_ELF_SYMS && info->esym_shdr_num > 0) {
+        __dump_set_symtab(info->esym_shdr_num, info->esym_shdr_size, 
+            info->esym_shdr_addr, info->esym_shdr_shndx);
+    }
 }
 
 MultiBootInformation::MemoryRange::MemoryRange(uint32_t mmap_base, uint32_t mmap_num)
