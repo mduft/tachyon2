@@ -20,8 +20,8 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
 
     /* make log output appear on the kernel console.
      * TODO: make this configurable (kernel command line?) */
-    Log::instance()->addWriter(__kcon_write);
-    Log::instance()->setLevel(Log::Trace);
+    Log::instance().addWriter(__kcon_write);
+    Log::instance().setLevel(Log::Trace);
 
     KINFO("booting tachyon on %s\n", TACHYON_ARCH);
     KTRACE("boot information at %p (magic: 0x%x)\n", mbd, mbm);

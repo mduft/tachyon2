@@ -77,3 +77,26 @@ void __cxa_finalize(void* dt) {
         }
     }
 }
+
+/* 
+ * .--------------------------------.
+ * | Support for local statics      |
+ * '--------------------------------' 
+ */
+
+/* The ABI requires a 64-bit type.  */
+__extension__ typedef int __guard __attribute__((mode(__DI__)));
+
+int __cxa_guard_acquire (__guard *g) {
+    // TODO: lock this!
+    return !*(char *)(g);
+}
+
+void __cxa_guard_release (__guard *g) {
+    // TODO: lock this!
+    *(char *)g = 1;
+}
+
+void __cxa_guard_abort (__guard *g) {
+    (void)g; // UNUSED
+}

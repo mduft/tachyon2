@@ -98,10 +98,11 @@ bootstrap_x86_64_x64:
 
     call __init_bss
     call __kcon_reset
-    call __init_cxx
 
     call x86_64_idt_init
     lidt (x86_64_idt_ptr)
+
+    call __init_cxx
 
     # restore the multiboot-loader information to the correct register
     mov (bootstrap_x86_64_boot_ebx), %rdi

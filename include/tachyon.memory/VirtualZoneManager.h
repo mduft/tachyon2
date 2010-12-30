@@ -11,10 +11,7 @@
 class VirtualZoneManager {
     VirtualZone zones[MAX_VZONES];
 public:
-    static VirtualZoneManager& instance() {
-        static VirtualZoneManager inst;
-        return inst; 
-    }
+    static VirtualZoneManager& instance();
 
     VirtualZone* define(uintptr_t start, uintptr_t end);
     void remove(VirtualZone* zone);

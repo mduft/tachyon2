@@ -1,9 +1,8 @@
 #include <tachyon.logging/Log.h>
 
-Log Log::staticLog;
-
-Log* Log::instance() {
-    return &staticLog;
+Log& Log::instance() {
+    static Log staticLog;
+    return staticLog;
 }
 
 void Log::addWriter(log_writer_t writer) {
