@@ -5,14 +5,16 @@
 
 #include <tachyon.platform/architecture.h>
 
-#include <tachyon.processes/Process.h>
+#include <tachyon.cpu/CpuContext.h>
 #include <tachyon.memory/SmartPointer.h>
 
-class Thread {
-    SmartPointer<Process> parent;
-public:
-    Thread(SmartPointer<Process>& par)
-        :   parent(par) {}
+class Cpu {
+    uint32_t id;
+    SmartPointer<CpuContext> context;
 
-    void switchTo();
+public:
+    Cpu(uint32_t cpuId)
+        :   id(cpuId) {}
+
+    void setCurrentContext(SmartPointer<CpuContext>& c);
 };

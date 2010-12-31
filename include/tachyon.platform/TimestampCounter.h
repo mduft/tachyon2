@@ -13,7 +13,7 @@ public:
     #ifdef __X86__
     uint64_t getCurrentTicks() { uint64_t c; asm volatile("rdtsc" : "=A"(c)); return c; }
     #elif defined(__X86_64__)
-    uint64_t getCurrentTicks() { register uint64_t c asm("rax") = 0; asm volatile("rdtsc;shl $31, %%rbx;or %%rbx, %%rax;" : "=a"(c)); return c; }
+    uint64_t getCurrentTicks() { register uint64_t c asm("rax") = 0; asm volatile("rdtsc;shl $31, %%rbx;or %%rbx, %%rax;" : "=a"(c) :: "%rbx"); return c; }
     #endif
 
     uint64_t getTicksSinceStart() { return getCurrentTicks() - startCount; }

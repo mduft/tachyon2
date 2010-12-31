@@ -13,6 +13,9 @@
 #include <tachyon.memory/CoreHeap.h>
 #include <tachyon.memory/SmartPointer.h>
 
+#include <tachyon.cpu/Cpu.h>
+#include <tachyon.cpu/CpuManager.h>
+
 extern "C" uintptr_t CORE_LMA_START;
 extern "C" uintptr_t _core_lma_ebss;
 

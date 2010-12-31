@@ -4,8 +4,15 @@
 #pragma once
 
 #include <tachyon.platform/architecture.h>
+#include <tachyon.memory/VirtualMemory.h>
 
 class Process {
+    vspace_t space;
 public:
-    Process();
+    Process()
+        :   space(VirtualMemory::instance().newVSpace()) {}
+
+    ~Process() {
+        VirtualMemory::instance().deleteVSpace(space);
+    }
 };

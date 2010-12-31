@@ -4,15 +4,16 @@
 #pragma once
 
 #include <tachyon.platform/architecture.h>
-
-#include <tachyon.processes/Process.h>
 #include <tachyon.memory/SmartPointer.h>
+#include <tachyon.cpu/Cpu.h>
 
-class Thread {
-    SmartPointer<Process> parent;
+class CpuManager {
+    /* TODO: linked list of active CPUs */
+    CpuManager() {}
 public:
-    Thread(SmartPointer<Process>& par)
-        :   parent(par) {}
+    CpuManager& instance();
 
-    void switchTo();
+    void add(SmartPointer<Cpu>& cpu);
+    void remove(SmartPointer<Cpu>& cpu);
 };
+
