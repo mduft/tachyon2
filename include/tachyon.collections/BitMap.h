@@ -11,8 +11,9 @@ class BitMap : Collection<bool> {
     size_t byteCount;
     uint8_t* memory;
 public:
-    // TODO: constructor that allocates
-    BitMap(size_t size);
+    BitMap(size_t size)
+        :   byteCount(size)
+        ,   memory(new uint8_t[size]) {}
     BitMap(void* mem, size_t size)
         :   byteCount(size)
         ,   memory(reinterpret_cast<uint8_t*>(mem)) {}

@@ -11,6 +11,7 @@
 #include <tachyon.memory/PhysicalMemory.h>
 #include <tachyon.memory/VirtualMemory.h>
 #include <tachyon.memory/CoreHeap.h>
+#include <tachyon.memory/SmartPointer.h>
 
 extern "C" uintptr_t CORE_LMA_START;
 extern "C" uintptr_t _core_lma_ebss;
@@ -70,20 +71,6 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
     PhysicalMemory::instance().reserve(reinterpret_cast<uintptr_t>(&CORE_LMA_START),
         (reinterpret_cast<uintptr_t>(&CORE_LMA_START) + 
             ((reinterpret_cast<uintptr_t>(&_core_lma_ebss) + 0x1000) & ~0xFFF)));
-
-    /* core heap tests */
-    char* ptr = CoreHeap::instance().allocate<char>(10);
-    KINFO("char[0x0a] @ %p\n", ptr);
-
-    char* n = new char[0x20];
-    KINFO("char[0x20] @ %p\n", n);
-
-    char* x = CoreHeap::instance().allocate<char>(0x10);
-    KINFO("char[0x10] @ %p\n", x);
-
-    CoreHeap::instance().free(ptr);
-    CoreHeap::instance().free(x);
-    CoreHeap::instance().free(n);
 
     /* temporary to see more screen output! */
     asm("cli; hlt;");
