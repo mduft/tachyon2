@@ -17,3 +17,8 @@ uint32_t* LocalApic::getBase() {
     return reinterpret_cast<uint32_t*>(base /* TODO: and away flags! */);
 }
 
+uint32_t LocalApic::getId() {
+    /* TODO */
+    return 0;
+}
+

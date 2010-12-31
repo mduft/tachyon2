@@ -15,6 +15,7 @@
 
 #include <tachyon.cpu/Cpu.h>
 #include <tachyon.cpu/CpuManager.h>
+#include <tachyon.cpu/LocalApic.h>
 
 extern "C" uintptr_t CORE_LMA_START;
 extern "C" uintptr_t _core_lma_ebss;
@@ -74,6 +75,10 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
     PhysicalMemory::instance().reserve(reinterpret_cast<uintptr_t>(&CORE_LMA_START),
         (reinterpret_cast<uintptr_t>(&CORE_LMA_START) + 
             ((reinterpret_cast<uintptr_t>(&_core_lma_ebss) + 0x1000) & ~0xFFF)));
+
+    /* Initialize BSP */
+    SmartPointer<Cpu> bspCpu = SmartPointer<Cpu>(new Cpu(LocalApic::getId()));
+    CpuManager::instance().add(bspCpu);
 
     /* temporary to see more screen output! */
     asm("cli; hlt;");

@@ -11,7 +11,7 @@ class CpuManager {
     /* TODO: linked list of active CPUs */
     CpuManager() {}
 public:
-    CpuManager& instance();
+    static CpuManager& instance();
 
     void add(SmartPointer<Cpu>& cpu);
     void remove(SmartPointer<Cpu>& cpu);
