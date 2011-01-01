@@ -8,7 +8,7 @@
 
 class PhysicalMemory {
     BitMap spBitmap;
-    uint8_t spStorage[(64 * 1024)]; // 64KB is enough for roughly 2TB physical mem.
+    uint8_t spStorage[(1024 * 1024)]; // 1MB = 32GB physical memory.
     static PhysicalMemory inst;
 
     PhysicalMemory()

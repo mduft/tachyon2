@@ -15,7 +15,8 @@ VirtualZone* VirtualZoneManager::define(uintptr_t start, uintptr_t end) {
         if(zones[i].start == 0 && zones[i].end == 0) {
             freeZone = &zones[i];
         } else {
-            if(zones[i].start <= start && end >= end) {
+            if((zones[i].start >= start && zones[i].start < end) ||
+                    (zones[i].end > start && zones[i].end <= end)) {
                 KTRACE("virtual memory zone already allocated"
                     "old: {%p, %p}, new: {%p, %p}\n", zones[i].start,
                     zones[i].end, start, end);

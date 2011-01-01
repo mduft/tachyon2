@@ -10,6 +10,7 @@
 #include <tachyon.memory/MemoryHelper.h>
 #include <tachyon.memory/PhysicalMemory.h>
 #include <tachyon.memory/VirtualMemory.h>
+#include <tachyon.memory/VirtualZoneManager.h>
 #include <tachyon.memory/CoreHeap.h>
 #include <tachyon.memory/SmartPointer.h>
 
@@ -76,11 +77,16 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
         (reinterpret_cast<uintptr_t>(&CORE_LMA_START) + 
             ((reinterpret_cast<uintptr_t>(&_core_lma_ebss) + 0x1000) & ~0xFFF)));
 
+    /* Local APIC MSR page must be reserved, and mapped to a known good address. */
+    PhysicalMemory::instance().reserve(LAPIC_PHYSICAL, LAPIC_PHYSICAL + 0x1000);
+    VirtualZone* apicZone = VirtualZoneManager::instance().define(LAPIC_VIRTUAL, LAPIC_VIRTUAL + 0x1000);
+    apicZone->used(true);
+    VirtualMemory::instance().map(VirtualMemory::instance().getCurrentVSpace(), 
+        LAPIC_VIRTUAL, LAPIC_PHYSICAL, PAGE_WRITABLE);
+
     /* Initialize BSP */
     SmartPointer<Cpu> bspCpu = SmartPointer<Cpu>(new Cpu(LocalApic::getId()));
     CpuManager::instance().add(bspCpu);
-
-    abort();
 
     /* temporary to see more screen output! */
     asm("cli; hlt;");
