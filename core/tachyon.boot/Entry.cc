@@ -84,6 +84,12 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
     VirtualMemory::instance().map(VirtualMemory::instance().getCurrentVSpace(), 
         LAPIC_VIRTUAL, LAPIC_PHYSICAL, PAGE_WRITABLE | PAGE_NONCACHABLE | PAGE_WRITETHROUGH);
 
+    /* Sanity check: we really want to be on the BSP here,
+     * since we did not initialize SMP yet... */
+    if(!LocalApic::isPrimaryCpu()) {
+        KFATAL("not on primary CPU!\n");
+    }
+
     /* Initialize BSP */
     SmartPointer<Cpu> bspCpu = SmartPointer<Cpu>(new Cpu(LocalApic::getId()));
     CpuManager::instance().add(bspCpu);

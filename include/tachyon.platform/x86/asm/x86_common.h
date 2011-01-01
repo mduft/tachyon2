@@ -148,3 +148,12 @@
 #define CR4_PCID_ENABLE         (1 << 17)
 #define CR4_OS_XSAVE            (1 << 18)
 
+/* 
+ * .--------------------------------.
+ * | APIC values.                   |
+ * '--------------------------------' 
+ */
+
+#define LAPIC_GLOBAL_ENABLE     (1 << 11)
+#define LAPIC_BSP               (1 << 8)
+

@@ -6,8 +6,7 @@
 #include <tachyon.platform/architecture.h>
 
 class LocalApic {
-    static uint32_t* getBase();
-
 public:
     static uint32_t getId();
+    static bool isPrimaryCpu();
 };

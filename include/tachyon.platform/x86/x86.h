@@ -33,5 +33,5 @@ typedef struct {
     uint16_t    ds;
     uint16_t    fs;
     uint16_t    gs;
-} cpustate_t;
+} PACKED cpustate_t;
 

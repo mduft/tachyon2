@@ -44,5 +44,5 @@ typedef struct {
     uintptr_t   r13;
     uintptr_t   r14;
     uintptr_t   r15;
-} cpustate_t;
+} PACKED cpustate_t;
 
