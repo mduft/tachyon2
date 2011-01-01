@@ -42,37 +42,6 @@ typedef uintptr_t   phys_addr_t;
 typedef phys_addr_t vspace_t;
 
 typedef struct {
-    uintptr_t   cr4;
-    uintptr_t   cr3;
-    uintptr_t   cr2;
-    uintptr_t   cr0;
-
-    uintptr_t   rbp;
-    uintptr_t   rsp;
-    uintptr_t   rdi;
-    uintptr_t   rsi;
-
-    uintptr_t   rdx;
-    uintptr_t   rcx;
-    uintptr_t   rbx;
-    uintptr_t   rax;
-
-    uintptr_t   rfl;
-    uintptr_t   rip;
-} cpustate_t;
-
-typedef struct {
-    uintptr_t   r15;
-    uintptr_t   r14;
-    uintptr_t   r13;
-    uintptr_t   r12;
-    uintptr_t   r11;
-    uintptr_t   r10;
-    uintptr_t   r9;
-    uintptr_t   r8;
-} xcpustate_t;
-
-typedef struct {
     uintptr_t   interrupt;
     uintptr_t   code;
     uintptr_t   ip;

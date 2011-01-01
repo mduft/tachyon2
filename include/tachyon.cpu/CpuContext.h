@@ -10,7 +10,6 @@ class CpuContext {
     SmartPointer<Thread> thread;
 
     cpustate_t state;
-    xcpustate_t xstate;
 public:
     CpuContext();
 
@@ -19,7 +18,4 @@ public:
 
     void setState(cpustate_t s) { state = s; }
     cpustate_t getState() { return state; }
-
-    void setExtendedState(xcpustate_t s) { xstate = s; }
-    xcpustate_t getExtendedState() { return xstate; }
 };

@@ -119,66 +119,23 @@ bootstrap_x86_64_x64:
     call __cxa_finalize
     call abort
 
-temp_store:
-    .quad 0
+.section .data
+
+abort_cpustate:
+    # over-reserve, to be future bullet-proof...
+    .space 0x100
+
+.section .text
 
 abort:
     # prepare cpu state pointer and extended cpu state pointer.
     # the return address on the stack is taken as RIP
 
-    mov %rax, temp_store
-    pop %rax
+    # TODO: What about RSP!?
+    push $abort_cpustate
+    call cpustate_save
+    mov %rax, %rdi
 
-    push %rax   # for frame return
-    push %rbp   # frame base pointer
-    push %rax   # first field of cpustate_t (rip)
-
-    mov temp_store, %rax
-    mov %rbp, temp_store
-    mov %rsp, %rbp
-    add $0x8, %rbp
-
-    pushf
-    push %rax
-    push %rbx
-
-    mov %rsp, %rax
-    addq $(4 * 0x8), %rax   # contains original stack pointer, before the cpu state
-
-    push %rcx
-    push %rdx
-    push %rsi
-    push %rdi
-    push %rax   # the actual original stack pointer
-    mov temp_store, %rax
-    push %rax
-
-    mov %cr0, %rax
-    push %rax
-
-    mov %cr2, %rax
-    push %rax
-
-    mov %cr3, %rax
-    push %rax
-
-    mov %cr4, %rax
-    push %rax
-
-    # extended state
-
-    mov %rsp, %rdi  # argument one: the pointer to cpu state
-
-    push %r8
-    push %r9
-    push %r10
-    push %r11
-    push %r12
-    push %r13
-    push %r14
-    push %r15
-
-    mov %rsp, %rsi  # argument two: the pointer to extended cpu state
     movw $0x0c00, __kcon_attr # make the output bright red on the console.
 
     call __dump_cpustate

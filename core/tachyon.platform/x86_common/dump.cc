@@ -6,28 +6,28 @@
 
 #include <tachyon.binary/elf/shdr.h>
 
-extern "C" void __dump_cpustate(cpustate_t* s, xcpustate_t* xs) {
-    /* state is the state of either a 32 or 64 bit mode cpu.
-     * xstate is the extended state of a 64 bit mode cpu or null */
+extern "C" void __dump_cpustate(cpustate_t* s) {
+    uintptr_t cr0 = 0, cr2 = 0, cr3 = 0, cr4 = 0;
 
+    asm volatile("mov %%cr0, %0; mov %%cr2, %1; mov %%cr3, %2; mov %%cr4, %3"
+        : "=r"(cr0), "=r"(cr2), "=r"(cr3), "=r"(cr4));
+
+    #ifdef __X86_64__
     KWRITE("-+-- cpu state ----------------------------------------------------------------\n"
-        " | rip=%p rfl=%p\n"
-        " | rax=%p rbx=%p rcx=%p\n"
-        " | rdx=%p rsi=%p rdi=%p\n"
-        " | rsp=%p rbp=%p cr0=%p\n"
-        " | cr2=%p cr3=%p cr4=%p\n",
-        s->rip, s->rfl, s->rax, s->rbx, s->rcx, s->rdx,
-        s->rsi, s->rdi, s->rsp, s->rbp, s->cr0, s->cr2,
-        s->cr3, s->cr4);
+        " |  ip=%p  fl=%p\n" " |  ax=%p  bx=%p  cx=%p\n" " |  dx=%p  si=%p  di=%p\n" " |  sp=%p  bp=%p cr0=%p\n"
+        " | cr2=%p cr3=%p cr4=%p\n", s->ip, s->flags, s->ax, s->bx, s->cx, s->dx,
+        s->si, s->di, s->sp, s->bp, cr0, cr2, cr3, cr4);
 
-    if(xs) {
-        KWRITE(
-            " | r8 =%p r9 =%p r10=%p\n"
-            " | r11=%p r12=%p r13=%p\n"
-            " | r14=%p r15=%p\n",
-            xs->r8, xs->r9, xs->r10, xs->r11, 
-            xs->r12, xs->r13, xs->r14, xs->r15);
-    }
+    KWRITE(" |  r8=%p  r9=%p r10=%p\n" " | r11=%p r12=%p r13=%p\n" " | r14=%p r15=%p\n",
+        s->r8, s->r9, s->r10, s->r11, s->r12, s->r13, s->r14, s->r15);
+    #else
+    KWRITE("-+-- cpu state ----------------------------------------------------------------\n"
+        " |  ip=%p  fl=%p\n |  ax=%p  bx=%p  cx=%p  dx=%p\n |  si=%p  di=%p  sp=%p  bp=%p\n"
+        " | cr0=%p cr2=%p cr3=%p cr4=%p\n", s->ip, s->flags, s->ax, s->bx, s->cx, s->dx,
+        s->si, s->di, s->sp, s->bp, cr0, cr2, cr3, cr4);
+    #endif
+    KWRITE(" |  es=0x%2x  cs=0x%2x  ss=0x%2x  ds=0x%2x  fs=0x%2x  gs=0x%2x\n",
+        s->es, s->cs, s->ss, s->ds, s->fs, s->gs);
 }
 
 extern "C" uintptr_t CORE_LMA_START;

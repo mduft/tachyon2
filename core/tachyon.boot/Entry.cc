@@ -80,6 +80,8 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
     SmartPointer<Cpu> bspCpu = SmartPointer<Cpu>(new Cpu(LocalApic::getId()));
     CpuManager::instance().add(bspCpu);
 
+    abort();
+
     /* temporary to see more screen output! */
     asm("cli; hlt;");
 

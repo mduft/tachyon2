@@ -121,56 +121,19 @@ bootstrap_x86:
 
     call abort
 
-temp_store:
-    .long 0
+abort_cpustate:
+    # over-reserve, to be bullet-proof on changes.
+    .space 0x100
 
 abort:
     # prepare cpu state pointer and extended cpu state pointer.
     # the return address on the stack is taken as RIP
 
-    mov %eax, temp_store
-    pop %eax
-
-    push %eax   # for frame return
-    push %ebp   # frame base pointer
-    push %eax   # first field of cpustate_t (rip)
-
-    mov temp_store, %eax
-    mov %ebp, temp_store
-    mov %esp, %ebp
-    add $0x4, %ebp
-
-    pushf
-    push %eax
-    push %ebx
-
-    mov %esp, %eax
-    add $(4 * 0x4), %eax   # contains original stack pointer, before the cpu state
-
-    push %ecx
-    push %edx
-    push %esi
-    push %edi
-    push %eax   # the actual original stack pointer
-    mov temp_store, %eax
+    # TODO: what about ESP?!
+    push $abort_cpustate
+    call cpustate_save
     push %eax
 
-    mov %cr0, %eax
-    push %eax
-
-    mov %cr2, %eax
-    push %eax
-
-    mov %cr3, %eax
-    push %eax
-
-    mov %cr4, %eax
-    push %eax
-
-    mov %esp, %eax
-
-    push $0x0
-    push %eax
     movw $0x0c00, __kcon_attr # make the output bright red on the console.
 
     call __dump_cpustate
