@@ -157,3 +157,80 @@
 #define LAPIC_GLOBAL_ENABLE     (1 << 11)
 #define LAPIC_BSP               (1 << 8)
 
+#define LAPIC_R_ID              0x20
+#define LAPIC_R_VERSION         0x30
+#define LAPIC_R_TASK_PRIORITY   0x80
+#define LAPIC_R_ARB_PRIORITY    0x90
+#define LAPIC_R_CPU_PRIORITY    0xa0
+#define LAPIC_R_EOI             0xb0
+#define LAPIC_R_REMOTE_READ     0xc0
+#define LAPIC_R_LOGIC_DEST      0xd0
+#define LAPIC_R_DEST_FORMAT     0xe0
+#define LAPIC_R_SPIV            0xf0
+
+#define LAPIC_R_ISR0            0x100
+#define LAPIC_R_ISR1            0x110
+#define LAPIC_R_ISR2            0x120
+#define LAPIC_R_ISR3            0x130
+#define LAPIC_R_ISR4            0x140
+#define LAPIC_R_ISR5            0x150
+#define LAPIC_R_ISR6            0x160
+#define LAPIC_R_ISR7            0x170
+
+#define LAPIC_R_TMR0            0x180
+#define LAPIC_R_TMR1            0x190
+#define LAPIC_R_TMR2            0x1a0
+#define LAPIC_R_TMR3            0x1b0
+#define LAPIC_R_TMR4            0x1c0
+#define LAPIC_R_TMR5            0x1d0
+#define LAPIC_R_TMR6            0x1e0
+#define LAPIC_R_TMR7            0x1f0
+
+#define LAPIC_R_IRR0            0x200
+#define LAPIC_R_IRR1            0x210
+#define LAPIC_R_IRR2            0x220
+#define LAPIC_R_IRR3            0x230
+#define LAPIC_R_IRR4            0x240
+#define LAPIC_R_IRR5            0x250
+#define LAPIC_R_IRR6            0x260
+#define LAPIC_R_IRR7            0x270
+
+#define LAPIC_R_ERROR_STATUS    0x280
+#define LAPIC_R_LVT_CMCI        0x2f0
+
+#define LAPIC_R_ICR0            0x300
+#define LAPIC_R_ICR1            0x310
+
+#define LAPIC_R_LVT_TIMER       0x320
+#define LAPIC_R_LVT_THERMAL     0x330
+#define LAPIC_R_LVT_PERF        0x340
+#define LAPIC_R_LVT_LINT0       0x350
+#define LAPIC_R_LVT_LINT1       0x360
+#define LAPIC_R_LVT_ERROR       0x370
+
+#define LAPIC_R_INITIAL_COUNT   0x380
+#define LAPIC_R_CURRENT_COUNT   0x390
+#define LAPIC_R_DIVIDE_CONFIG   0x3e0
+
+#define LAPIC_SPIV_ENABLE       (1 << 8)
+#define LAPIC_SPIV_NO_EOI_BCAST (1 << 12)
+
+#define LAPIC_TIMERM_ONESHOT    0
+#define LAPIC_TIMERM_PERIODIC   1
+#define LAPIC_TIMERM_TSC_DEADL  2
+
+#define LAPIC_TIMER_MASKED      (1 << 16)
+#define LAPIC_TIMER_VECTOR      0x20
+
+#define LAPIC_LVT_SEND_PENDING  (1 << 12)
+
+#define LAPIC_LVT_MODE_FIXED    0x0
+#define LAPIC_LVT_MODE_SMI      0x2
+#define LAPIC_LVT_MODE_NMI      0x4
+#define LAPIC_LVT_MODE_INIT     0x5
+#define LAPIC_LVT_MODE_EXT      0x7
+
+#define LAPIC_LVT_TRIGGER_LEVEL (1 << 15)
+#define LAPIC_LVT_REMOTE_IRR    (1 << 14)
+#define LAPIC_LVT_IN_PIN_POL    (1 << 13)
+#define LAPIC_LVT_MASKED        (1 << 17)

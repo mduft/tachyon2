@@ -4,9 +4,13 @@
 #pragma once
 
 #include <tachyon.platform/architecture.h>
+#include <tachyon.core.iface/Collection.h>
 
-template<typename T>
-IFace Collection {
-    virtual size_t size() = 0;
-    virtual void clear() = 0;
+template<class T>
+class LinkedList : Collection<T> {
+public:
+    virtual size_t size();
+    virtual void clear();
+
+    void add(T);
 };

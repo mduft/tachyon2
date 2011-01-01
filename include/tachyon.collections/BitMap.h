@@ -7,7 +7,7 @@
 #include <tachyon.core.iface/Collection.h>
 #include <tachyon.memory/MemoryHelper.h>
 
-class BitMap : Collection<bool> {
+class BitMap {
     size_t byteCount;
     uint8_t* memory;
 public:

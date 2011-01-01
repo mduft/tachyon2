@@ -94,8 +94,13 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
     SmartPointer<Cpu> bspCpu = SmartPointer<Cpu>(new Cpu(LocalApic::getId()));
     CpuManager::instance().add(bspCpu);
 
+    LocalApic::init();
+    KINFO("APIC state: %s\n", LocalApic::isEnabled() ? "enabled" : "disabled");
+
     /* temporary to see more screen output! */
+    xx:
     asm("cli; hlt;");
+    goto xx;
 
     KFATAL("reached end of kernel after %lu ticks!\n", ctr.getTicksSinceStart());
 }

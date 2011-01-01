@@ -7,6 +7,11 @@
 
 class LocalApic {
 public:
+    static uintptr_t getPhysicalBase();
     static uint32_t getId();
     static bool isPrimaryCpu();
+    static bool isEnabled();
+
+    static void init();
+    static void eoi();
 };

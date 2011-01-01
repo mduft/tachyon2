@@ -39,9 +39,9 @@ _x86_isr\num:
     push %esp
     call interrupt_l0
     .if !\has_err
-    add $0x8, %esp
+    add $0xc, %esp
     .else
-    add $0x4, %esp
+    add $0x8, %esp
     .endif
     iret
     .endif

@@ -43,7 +43,7 @@ _x86_64_isr\num:
     .else
     addq $0x8, %rsp
     .endif
-    iret
+    iretq
     .endif
 .endm
 
