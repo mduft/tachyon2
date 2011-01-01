@@ -82,7 +82,7 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
     VirtualZone* apicZone = VirtualZoneManager::instance().define(LAPIC_VIRTUAL, LAPIC_VIRTUAL + 0x1000);
     apicZone->used(true);
     VirtualMemory::instance().map(VirtualMemory::instance().getCurrentVSpace(), 
-        LAPIC_VIRTUAL, LAPIC_PHYSICAL, PAGE_WRITABLE);
+        LAPIC_VIRTUAL, LAPIC_PHYSICAL, PAGE_WRITABLE | PAGE_NONCACHABLE | PAGE_WRITETHROUGH);
 
     /* Initialize BSP */
     SmartPointer<Cpu> bspCpu = SmartPointer<Cpu>(new Cpu(LocalApic::getId()));
