@@ -8,6 +8,7 @@ SECTION_BOOT_DATA
 .global x86_64_gdt_code
 .global x86_64_gdt_data
 .global x86_64_gdt_ptr
+.global x86_64_tss
 
 # .----------------------------------------.
 # | 64 kernel gdt code and data segments   |
@@ -30,6 +31,9 @@ x86_64_gdt:
     x86_64_gdt_data:
         .long 0x0000FFFF
         .long 0x000F0000 | (GDT_64BIT | GDT_PRESENT | GDT_TYPE_CODE_OR_DATA | GDT_DATA_WRITE_ENABLE | GDT_GRANULARITY)
+
+    x86_64_tss:
+        .quad 0x0
 
 # .----------------------------------------.
 # | 64 kernel gdt pointer (limit + ptr)    |

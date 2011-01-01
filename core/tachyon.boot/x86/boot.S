@@ -121,17 +121,34 @@ bootstrap_x86:
 
     call abort
 
+.section .data
+
 abort_cpustate:
     # over-reserve, to be bullet-proof on changes.
     .space 0x100
 
+.section .text
+
 abort:
     # prepare cpu state pointer and extended cpu state pointer.
-    # the return address on the stack is taken as RIP
+    # the return address on the stack is taken as EIP
 
-    # TODO: what about ESP?!
+    push %eax               # save original EAX
+    mov %esp, %eax          # current ESP
+    add $0x08, %eax         # minus saved EAX and return address
+    push %eax               # original ESP
+
+    mov 0x08(%esp), %eax    # the return address
+    push %eax               # original EIP
+    mov 0x08(%esp), %eax    # original EAX
+
     push $abort_cpustate
     call cpustate_save
+
+    pop %ebx
+    pop %ebx
+    pop %ebx
+
     push %eax
 
     movw $0x0c00, __kcon_attr # make the output bright red on the console.

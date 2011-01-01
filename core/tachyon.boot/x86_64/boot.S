@@ -131,10 +131,22 @@ abort:
     # prepare cpu state pointer and extended cpu state pointer.
     # the return address on the stack is taken as RIP
 
-    # TODO: What about RSP!?
+    push %rax               # save original RAX
+    mov %rsp, %rax          # current RSP
+    add $0x10, %rax         # minus saved RAX and return address
+    push %rax               # original RSP
+
+    mov 0x10(%rsp), %rax    # the return address
+    push %rax               # original RIP
+    mov 0x10(%rsp), %rax    # original RAX
+
     push $abort_cpustate
     call cpustate_save
     mov %rax, %rdi
+
+    pop %rax
+    pop %rax
+    pop %rax
 
     movw $0x0c00, __kcon_attr # make the output bright red on the console.
 
