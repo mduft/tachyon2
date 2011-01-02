@@ -13,6 +13,11 @@ extern "C" void interrupt_l0(interrupt_t * state) {
 }
 
 void InterruptManager::dispatch(interrupt_t* state) {
-    KWARN("unhandled interrupt 0x%x at %p (0x%x)\n", state->interrupt, state->ip, state->code);
+    if(handlers[state->interrupt] != 0) {
+        handlers[state->interrupt](state);
+    } else {
+        KWARN("unhandled interrupt 0x%x at %p (0x%x)\n", state->interrupt, state->ip, state->code);
+    }
+
     LocalApic::eoi();
 }
