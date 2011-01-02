@@ -8,7 +8,7 @@ CpuManager& CpuManager::instance() {
     return inst;
 }
 
-void CpuManager::add(SmartPointer<Cpu>& cpu) {
+void CpuManager::add(SmartPointer<Cpu> cpu) {
     /* TODO */
 }
 

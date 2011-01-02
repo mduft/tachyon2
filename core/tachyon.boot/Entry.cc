@@ -17,6 +17,7 @@
 #include <tachyon.cpu/Cpu.h>
 #include <tachyon.cpu/CpuManager.h>
 #include <tachyon.cpu/LocalApic.h>
+#include <tachyon.cpu/CpuId.h>
 
 extern "C" uintptr_t CORE_LMA_START;
 extern "C" uintptr_t _core_lma_ebss;
@@ -77,25 +78,23 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
         (reinterpret_cast<uintptr_t>(&CORE_LMA_START) + 
             ((reinterpret_cast<uintptr_t>(&_core_lma_ebss) + 0x1000) & ~0xFFF)));
 
-    /* Local APIC MSR page must be reserved, and mapped to a known good address. */
-    PhysicalMemory::instance().reserve(LAPIC_PHYSICAL, LAPIC_PHYSICAL + 0x1000);
-    VirtualZone* apicZone = VirtualZoneManager::instance().define(LAPIC_VIRTUAL, LAPIC_VIRTUAL + 0x1000);
-    apicZone->used(true);
-    VirtualMemory::instance().map(VirtualMemory::instance().getCurrentVSpace(), 
-        LAPIC_VIRTUAL, LAPIC_PHYSICAL, PAGE_WRITABLE | PAGE_NONCACHABLE | PAGE_WRITETHROUGH);
+    /* CPU identification and basic checks */
+    idleaf_t cpuid = CpuId::getLeaf(1, 0);
+    
+    KINFO("cpu identification: family %d, model %d, stepping %d\n", 
+        (cpuid.ax >> 8) & 0xF, (cpuid.ax >> 4) & 0xF, (cpuid.ax) & 0xF);
+    KINFO("                    extended family %d, extended model %d\n",
+        (cpuid.ax >> 20) & 0xFF, (cpuid.ax >> 16) & 0xF);
 
-    /* Sanity check: we really want to be on the BSP here,
-     * since we did not initialize SMP yet... */
-    if(!LocalApic::isPrimaryCpu()) {
-        KFATAL("not on primary CPU!\n");
+    if(cpuid.dx & (1 << 9)) {
+        LocalApic::init();
+        KINFO("APIC state: %s\n", LocalApic::isEnabled() ? "enabled" : "disabled");
+
+        /* Initialize BSP */
+        CpuManager::instance().add(SmartPointer<Cpu>(new Cpu(LocalApic::getId())));
+    } else {
+        KFATAL("APIC support is required!\n");
     }
-
-    /* Initialize BSP */
-    SmartPointer<Cpu> bspCpu = SmartPointer<Cpu>(new Cpu(LocalApic::getId()));
-    CpuManager::instance().add(bspCpu);
-
-    LocalApic::init();
-    KINFO("APIC state: %s\n", LocalApic::isEnabled() ? "enabled" : "disabled");
 
     /* temporary to see more screen output! */
     xx:

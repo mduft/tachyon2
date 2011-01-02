@@ -13,7 +13,7 @@ class CpuManager {
 public:
     static CpuManager& instance();
 
-    void add(SmartPointer<Cpu>& cpu);
-    void remove(SmartPointer<Cpu>& cpu);
+    void add(SmartPointer<Cpu> cpu);
+    void remove(SmartPointer<Cpu> cpu);
 };
 
