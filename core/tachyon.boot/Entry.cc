@@ -97,8 +97,9 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
     }
 
     /* temporary to see more screen output! */
+    asm("sti;");
     xx:
-    asm("cli; hlt;");
+    asm("hlt;");
     goto xx;
 
     KFATAL("reached end of kernel after %lu ticks!\n", ctr.getTicksSinceStart());

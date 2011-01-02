@@ -87,9 +87,8 @@
 #define APIC_SV_ENABLE          (1 << 8)
 #define APIC_SV_NO_EOI_BCAST    (1 << 12)
 
-#define APIC_TM_ONESHOT         0
-#define APIC_TM_PERIODIC        1
-#define APIC_TM_TSC_DEADL       2
+#define APIC_TM_PERIODIC        (1 << 17)
+#define APIC_TM_TSC_DEADL       (2 << 17)
 
 #define APIC_TIMER_MASKED       (1 << 16)
 #define APIC_TIMER_VECTOR       0x20
@@ -138,21 +137,23 @@ bool LocalApic::isEnabled() {
 
 static void spuriousHandler(interrupt_t* state) {
     KINFO("spurious interrupt!\n");
+    LocalApic::eoi();
 }
 
 static void errorHandler(interrupt_t* state) {
     KWARN("APIC error!\n");
+    LocalApic::eoi();
 }
 
 static void timerHandler(interrupt_t* state) {
-    KINFO("timer: %d\r", APIC_REG(APIC_REG_CURRENT_COUNT));
+    static uint64_t c;
+    KINFO("timer: %d\n", ++c);
+    LocalApic::eoi();
 }
 
 void LocalApic::init() {
     /* setup the local APIC. the APIC timer is used for scheduling,
      * so it needs to be setup the same way for all cpus */
-    uint64_t msr;
-    RD_APIC_MSR(msr);
 
     KINFO("APIC base @ %p\n", getPhysicalBase());
 
@@ -185,7 +186,7 @@ void LocalApic::init() {
 
     APIC_REG(APIC_REG_DIVIDE_CONFIG) = 0xB;
     APIC_REG(APIC_REG_INITIAL_COUNT) = 0x10000000;
-    APIC_REG(APIC_REG_LVT_TIMER)     = IRQ_TIMER;
+    APIC_REG(APIC_REG_LVT_TIMER)     = APIC_TM_PERIODIC | IRQ_TIMER;
 
     APIC_REG(APIC_REG_LVT_ERROR)     = IRQ_ERROR;
 
@@ -195,9 +196,6 @@ void LocalApic::init() {
 
     APIC_REG(APIC_REG_EOI)           = 0;
     APIC_REG(APIC_REG_TPR)           = 0;
-
-    KINFO("APIC state: global: %s, software-disabled: %s\n", 
-        (msr & APIC_GLOBAL_ENABLE ? "enabled" : "disabled"), (APIC_REG(APIC_REG_SV) & APIC_SV_ENABLE ? "no" : "yes"));
 }
 
 void LocalApic::eoi() {
