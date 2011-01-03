@@ -40,10 +40,10 @@ cpustate_save:
     mov %ecx      , 0x0c(%eax)  # store RCX
     mov %edx      , 0x10(%eax)  # store RDX
 
-    mov 0x08(%esp), %ebx
+    mov 0x04(%esp), %ebx
     mov %ebx      , 0x14(%eax)  # store RBX
 
-    mov 0x30(%esp), %ebx
+    mov 0x18(%esp), %ebx
     mov %ebx      , 0x18(%eax)  # store RSP
     mov %ebp      , 0x1c(%eax)  # store RBP
     mov %esi      , 0x20(%eax)  # store RSI

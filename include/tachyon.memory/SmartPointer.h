@@ -45,6 +45,10 @@ public:
         return ptr;
     }
 
+    T* get() {
+        return ptr;
+    }
+
     SmartPointer<T>& operator=(const SmartPointer<T>& rhs) {
         if(this == &rhs) {
             if(cnt->down() == 0) {
@@ -58,6 +62,10 @@ public:
         }
 
         return *this;
+    }
+
+    bool operator==(const SmartPointer<T>& rhs) const {
+        return (ptr == rhs.ptr);
     }
 
     size_t references() {

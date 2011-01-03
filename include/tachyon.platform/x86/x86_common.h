@@ -38,6 +38,9 @@ typedef intptr_t    intmax_t;
 typedef uintptr_t   uintmax_t;
 typedef intmax_t    off_t;
 
+typedef uintmax_t   pid_t;
+typedef pid_t       tid_t;
+
 typedef uintptr_t   phys_addr_t;
 typedef phys_addr_t vspace_t;
 

@@ -10,6 +10,8 @@
 #include <tachyon.memory/VirtualMemory.h>
 #include <tachyon.memory/VirtualZoneManager.h>
 
+#include <tachyon.processes/Scheduler.h>
+
 #if defined(__X86__)
 # define RD_APIC_MSR(x) asm volatile("rdmsr" : "=A"(x) : "c"(IA32_APIC_BASE));
 #elif defined (__X86_64__)
@@ -146,8 +148,8 @@ static void errorHandler(interrupt_t* state) {
 }
 
 static void timerHandler(interrupt_t* state) {
-    static uint64_t c;
-    KINFO("timer: %d\n", ++c);
+    Scheduler::instance().schedule();
+
     LocalApic::eoi();
 }
 

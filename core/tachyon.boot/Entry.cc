@@ -19,6 +19,18 @@
 #include <tachyon.cpu/LocalApic.h>
 #include <tachyon.cpu/CpuId.h>
 
+#include <tachyon.processes/Scheduler.h>
+#include <tachyon.processes/IdleThread.h>
+
+/* little helper with C++ linkage, so the Process class can
+ * have this as friend, and allow creation of a process with
+ * an existing address space (initialized during boot(), see
+ * below).
+ */
+Process* createCore() {
+    return new Process(VirtualMemory::instance().getCurrentVSpace(), 0);
+}
+
 extern "C" uintptr_t CORE_LMA_START;
 extern "C" uintptr_t _core_lma_ebss;
 
@@ -96,11 +108,24 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
         KFATAL("APIC support is required!\n");
     }
 
-    /* temporary to see more screen output! */
+    /* Initialize process management. Create the kernel process, and
+     * add the required threads. */
+
+    SmartPointer<Process> core(createCore());
+    
+    core->addThread(new Thread(core.get(), &IdleThread::idle, 0));
+
     asm("sti;");
-    xx:
     asm("hlt;");
-    goto xx;
+
+    /* should never come here: the STI enables interrupts,
+     * the HLT makes the code wait for an interrupt. the only
+     * unmasked interrupt here (provided all spurious interrupts
+     * have been delivered now), is the schduler timer, which
+     * will make the Scheduler switch to another thread. Since
+     * there is no Thread for _this_ current location, the
+     * scheduler will never return here.
+     */
 
     KFATAL("reached end of kernel after %lu ticks!\n", ctr.getTicksSinceStart());
 }
