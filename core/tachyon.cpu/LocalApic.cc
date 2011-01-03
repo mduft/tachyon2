@@ -129,7 +129,7 @@ bool LocalApic::isPrimaryCpu() {
 }
 
 bool LocalApic::isEnabled() {
-    uint32_t msr;
+    uint64_t msr;
     RD_APIC_MSR(msr);
 
     return (msr & APIC_GLOBAL_ENABLE && (APIC_REG(APIC_REG_SV) & APIC_SV_ENABLE));
@@ -154,7 +154,6 @@ static void timerHandler(interrupt_t* state) {
 void LocalApic::init() {
     /* setup the local APIC. the APIC timer is used for scheduling,
      * so it needs to be setup the same way for all cpus */
-
     KINFO("APIC base @ %p\n", getPhysicalBase());
 
     /* Local APIC MSR page must be reserved, and mapped to a known good address. */
