@@ -11,17 +11,24 @@ typedef SmartPointer<Process> ProcessPtr;
 typedef Collection<ProcessPtr> ProcessCollection;
 
 class Scheduler {
-    SmartPointer<ProcessCollection> processes[4];
-
-    Scheduler();
 public:
     typedef enum {
-        Kernel,
+        Kernel = 0,
         High,
         Normal,
         Low
     } priority_t;
 
+private:
+    SmartPointer<ProcessCollection> pKernel;
+    SmartPointer<ProcessCollection> pHigh;
+    SmartPointer<ProcessCollection> pNormal;
+    SmartPointer<ProcessCollection> pLow;
+
+    SmartPointer<ProcessCollection> getListForPrio(priority_t prio);
+
+    Scheduler();
+public:
     static Scheduler& instance();
     
     void schedule();

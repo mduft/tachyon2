@@ -9,9 +9,19 @@ Scheduler& Scheduler::instance() {
     return inst;
 }
 
-Scheduler::Scheduler() {
-    for(uint32_t i = 0; i < (sizeof(processes) / sizeof(processes[0])); ++i) {
-        processes[i] = new LinkedList<ProcessPtr>();
+Scheduler::Scheduler() 
+    :   pKernel(new LinkedList<ProcessPtr>())
+    ,   pHigh(new LinkedList<ProcessPtr>())
+    ,   pNormal(new LinkedList<ProcessPtr>())
+    ,   pLow(new LinkedList<ProcessPtr>()) {
+}
+
+SmartPointer<ProcessCollection> Scheduler::getListForPrio(Scheduler::priority_t prio) {
+    switch(prio) {
+    case Scheduler::Kernel : return pKernel;
+    case Scheduler::High   : return pHigh;
+    case Scheduler::Normal : return pNormal;
+    case Scheduler::Low    : return pLow;
     }
 }
 
@@ -20,6 +30,6 @@ void Scheduler::schedule() {
 }
 
 void Scheduler::addProcess(ProcessPtr proc, priority_t prio) {
-    processes[static_cast<uint32_t>(prio)]->add(proc);
+    getListForPrio(prio)->add(proc);
 }
 
