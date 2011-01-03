@@ -11,9 +11,9 @@ typedef SmartPointer<Process> ProcessPtr;
 typedef Collection<ProcessPtr> ProcessCollection;
 
 class Scheduler {
-    SmartPointer<ProcessCollection> processes;
+    SmartPointer<ProcessCollection> processes[4];
 
-    Scheduler() {}
+    Scheduler();
 public:
     typedef enum {
         Kernel,

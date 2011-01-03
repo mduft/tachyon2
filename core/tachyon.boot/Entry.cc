@@ -27,8 +27,8 @@
  * an existing address space (initialized during boot(), see
  * below).
  */
-Process* createCore() {
-    return new Process(VirtualMemory::instance().getCurrentVSpace(), 0);
+Process* createCoreProcess(pid_t pid) {
+    return new Process(VirtualMemory::instance().getCurrentVSpace(), pid);
 }
 
 extern "C" uintptr_t CORE_LMA_START;
@@ -103,17 +103,21 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
         KINFO("APIC state: %s\n", LocalApic::isEnabled() ? "enabled" : "disabled");
 
         /* Initialize BSP */
-        CpuManager::instance().add(SmartPointer<Cpu>(new Cpu(LocalApic::getId())));
+        CpuManager::instance().add(new Cpu(LocalApic::getId()));
     } else {
         KFATAL("APIC support is required!\n");
     }
 
-    /* Initialize process management. Create the kernel process, and
-     * add the required threads. */
+    /* Initialize process management. Create the kernel process(es), and
+     * add the required threads. All the kernel Processes run in the same
+     * address space (!), multiple of them may exist to reflect different
+     * priorities (fex. the idle process has the lowest) 
+     */
 
-    SmartPointer<Process> core(createCore());
-    
-    core->addThread(new Thread(core.get(), &IdleThread::idle, 0));
+    SmartPointer<Process> idle(createCoreProcess(1));
+    idle->addThread(new Thread(idle.get(), &IdleThread::idle, 0));
+
+    Scheduler::instance().addProcess(idle, Scheduler::Low);
 
     asm("sti;");
     asm("hlt;");

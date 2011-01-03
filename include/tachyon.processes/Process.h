@@ -26,7 +26,7 @@ class Process {
      * (which is not allowed, the last statement in "boot()"
      * panics the kernel)
      */
-    friend Process* createCore();
+    friend Process* createCoreProcess(pid_t pid);
     Process(vspace_t existing, pid_t pid);
 public:
     Process(pid_t pid);
