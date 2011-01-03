@@ -24,7 +24,7 @@ public:
         Iterator(llnode_t* start) { current = start; }
     public:
         T operator*() { if(!current) { return 0; } return current->payload; }
-        void operator++() { if(!current) { return; } current = current->next; }
+        Iterator& operator++() { if(current) { current = current->next; } return *this; }
         bool end() { return (current == 0); }
     };
 
