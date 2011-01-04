@@ -13,19 +13,16 @@ typedef Collection<ProcessPtr> ProcessCollection;
 class Scheduler {
 public:
     typedef enum {
-        Kernel = 0,
-        High,
-        Normal,
-        Low
+        Highest = 0,
+        High    = 1,
+        Normal  = 2,
+        Low     = 3,
+        Lowest  = 4,
     } priority_t;
-
 private:
-    SmartPointer<ProcessCollection> pKernel;
-    SmartPointer<ProcessCollection> pHigh;
-    SmartPointer<ProcessCollection> pNormal;
-    SmartPointer<ProcessCollection> pLow;
+    ProcessCollection* processes[Lowest + 1];
 
-    SmartPointer<ProcessCollection> getListForPrio(priority_t prio);
+    Thread* findReadyThread(Process* proc);
 
     Scheduler();
 public:

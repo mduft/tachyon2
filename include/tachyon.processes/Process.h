@@ -35,5 +35,7 @@ public:
     void addThread(ThreadPtr thread);
     void removeThread(ThreadPtr thread);
 
-    SmartPointer<ThreadCollection> getThreads();
+    SmartPointer<ThreadCollection> getThreads() { return threads; }
+
+    pid_t getId() { return id; }
 };

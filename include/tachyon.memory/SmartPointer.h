@@ -50,7 +50,8 @@ public:
     }
 
     SmartPointer<T>& operator=(const SmartPointer<T>& rhs) {
-        if(this == &rhs) {
+        /* prevent self-asignment */
+        if(this != &rhs) {
             if(cnt->down() == 0) {
                 delete cnt;
                 delete ptr;

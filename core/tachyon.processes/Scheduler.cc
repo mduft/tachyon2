@@ -9,27 +9,47 @@ Scheduler& Scheduler::instance() {
     return inst;
 }
 
-Scheduler::Scheduler() 
-    :   pKernel(new LinkedList<ProcessPtr>())
-    ,   pHigh(new LinkedList<ProcessPtr>())
-    ,   pNormal(new LinkedList<ProcessPtr>())
-    ,   pLow(new LinkedList<ProcessPtr>()) {
-}
-
-SmartPointer<ProcessCollection> Scheduler::getListForPrio(Scheduler::priority_t prio) {
-    switch(prio) {
-    case Scheduler::Kernel : return pKernel;
-    case Scheduler::High   : return pHigh;
-    case Scheduler::Normal : return pNormal;
-    case Scheduler::Low    : return pLow;
+Scheduler::Scheduler() {
+    for(uint32_t i = 0; i < (Lowest + 1); ++i) {
+        processes[i] = new LinkedList<ProcessPtr>();
     }
 }
 
+Thread* Scheduler::findReadyThread(Process* proc) {
+    if(!proc) {
+        KWARN("NULL process found!\n");
+        return 0;
+    }
+
+    /* TODO: need to make iterations part of the collection interface... but how? */
+    SmartPointer<ThreadCollection> threads = proc->getThreads();
+
+    for(ThreadCollection::Iterator it = threads->iterator(); !it.end(); ++it) {
+        KINFO("thread %d is %s\n", (*it)->getId(), (*it)->isReady() ? "ready" : "not ready");
+
+        if((*it)->isReady()) {
+            return it->get();
+        }
+    }
+
+    return 0;
+}
+
 void Scheduler::schedule() {
-    
+    for(uint32_t i = 0; i < (Lowest + 1); ++i) {
+        for(ProcessCollection::Iterator it = processes[i]->iterator(); !it.end(); ++it) {
+            Process* pr = it->get();
+            Thread* thr = findReadyThread(pr);
+
+            if(!thr)
+                continue;
+
+            KINFO("would schedule thread %d for process %d\n", thr->getId(), (*it)->getId());
+        }
+    }
 }
 
 void Scheduler::addProcess(ProcessPtr proc, priority_t prio) {
-    getListForPrio(prio)->add(proc);
+    processes[prio]->add(proc);
 }
 

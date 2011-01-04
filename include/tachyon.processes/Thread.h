@@ -27,6 +27,8 @@ public:
         ,   entry(entry) {}
 
     void switchTo();
+    bool isReady() { return true; }
+    tid_t getId() { return id; }
 
     bool operator==(const Thread& other) const { return ((parent == other.parent) && (id == other.id)); }
 };

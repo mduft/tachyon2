@@ -15,19 +15,19 @@ class LinkedList : public Collection<T> {
         T payload;
     } llnode_t;
 
-    llnode_t* head;
-public:
-    class Iterator {
+    class LinkedListIterator : public GenericIterator<T> {
         friend class LinkedList;
-
         llnode_t* current;
-        Iterator(llnode_t* start) { current = start; }
+        LinkedListIterator(llnode_t* start) { current = start; }
     public:
-        T operator*() { if(!current) { return 0; } return current->payload; }
-        Iterator& operator++() { if(current) { current = current->next; } return *this; }
+        T& operator*() { return current->payload; }
+        T* operator->() { return &current->payload; }
+        LinkedListIterator& operator++() { if(current) { current = current->next; } return *this; }
         bool end() { return (current == 0); }
     };
 
+    llnode_t* head;
+public:
     LinkedList()
         :   count(0)
         ,   head(0) {}
@@ -63,7 +63,7 @@ public:
         }
     }
 
-    virtual Iterator iterator() {
-        return Iterator(head);
+    virtual BaseIterator<T> iterator() {
+        return BaseIterator<T>(new LinkedListIterator(head));
     }
 };

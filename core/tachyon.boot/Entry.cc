@@ -117,10 +117,10 @@ extern "C" void boot(void* mbd, uint32_t mbm) {
     SmartPointer<Process> idle(createCoreProcess(1));
     idle->addThread(new Thread(idle.get(), &IdleThread::idle, 0));
 
-    Scheduler::instance().addProcess(idle, Scheduler::Low);
+    Scheduler::instance().addProcess(idle, Scheduler::Lowest);
 
     asm("sti;");
-    asm("hlt;");
+    asm("stop: hlt; jmp stop;");
 
     /* should never come here: the STI enables interrupts,
      * the HLT makes the code wait for an interrupt. the only
