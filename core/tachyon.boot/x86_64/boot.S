@@ -55,6 +55,11 @@ bootstrap_x86_64:
     mov %ax, %gs
     mov %ax, %ss
 
+    # disable the good ole 8259A PIC, we'll use the APIC instead
+    mov $0xFF, %al
+    out %al, $0xA1
+    out %al, $0x21
+
     # Assume, that paging structures are correct here, we
     # only need to switch to long mode, and enable paging
 

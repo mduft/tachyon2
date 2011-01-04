@@ -65,6 +65,11 @@ bootstrap_x86:
     mov %ax, %gs
     mov %ax, %ss
 
+    # disable the good ole 8259A PIC, we'll use the APIC instead
+    mov $0xFF, %al
+    out %al, $0xA1
+    out %al, $0x21
+
     # setup boot paging to map kernel to higher half
 
     #mov %cr4, %eax               # read CR4
