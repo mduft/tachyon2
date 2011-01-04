@@ -4,8 +4,9 @@
 #pragma once
 
 #include <tachyon.platform/architecture.h>
+#include <tachyon.logging/Log.h>
 
 class IdleThread {
 public:
-    static void idle() { asm("hlt;"); }
+    static void idle() { KTRACE("idling ...\n");  asm("hlt;"); }
 };
