@@ -19,12 +19,10 @@ private:
     Process* parent;
     tid_t id;
 
-    thread_entry_t entry;
+    uintptr_t stack;
+    cpustate_t state;
 public:
-
-    Thread(Process* par, thread_entry_t entry, tid_t id)
-        :   parent(par)
-        ,   entry(entry) {}
+    Thread(Process* par, thread_entry_t entry, tid_t id);
 
     void switchTo();
     bool isReady() { return true; }

@@ -25,8 +25,6 @@ Thread* Scheduler::findReadyThread(Process* proc) {
     SmartPointer<ThreadCollection> threads = proc->getThreads();
 
     for(ThreadCollection::Iterator it = threads->iterator(); !it.end(); ++it) {
-        KINFO("thread %d is %s\n", (*it)->getId(), (*it)->isReady() ? "ready" : "not ready");
-
         if((*it)->isReady()) {
             return it->get();
         }
@@ -44,7 +42,8 @@ void Scheduler::schedule() {
             if(!thr)
                 continue;
 
-            KINFO("would schedule thread %d for process %d\n", thr->getId(), (*it)->getId());
+            KINFO("switch to thread %d for process %d\n", thr->getId(), (*it)->getId());
+            thr->switchTo();
         }
     }
 }
